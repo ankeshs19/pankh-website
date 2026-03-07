@@ -40,7 +40,7 @@ ${formData.message}
     `.trim()
 
     // Open WhatsApp with pre-filled message
-    const whatsappURL = `https://wa.me/YOUR_WHATSAPP_NUMBER?text=${encodeURIComponent(whatsappMessage)}`
+    const whatsappURL = `https://wa.me/919746207344?text=${encodeURIComponent(whatsappMessage)}`
     window.open(whatsappURL, '_blank')
     
     setSubmitted(true)
@@ -129,7 +129,7 @@ ${formData.message}
                       <h3 className="font-semibold text-pankh-navy mb-1">WhatsApp</h3>
                       <p className="text-gray-600">Chat with us instantly</p>
                       <a 
-                        href="https://wa.me/YOUR_WHATSAPP_NUMBER" 
+                        href="https://wa.me/919746207344" 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-green-600 hover:text-green-700 text-sm font-medium"
@@ -288,7 +288,7 @@ ${formData.message}
           <h3 className="text-2xl font-bold mb-4">Prefer to Chat Directly?</h3>
           <p className="text-gray-300 mb-6">Connect with us on WhatsApp for instant support</p>
           <a 
-            href="https://wa.me/YOUR_WHATSAPP_NUMBER" 
+            href="https://wa.me/919746207344" 
             target="_blank" 
             rel="noopener noreferrer"
             className="inline-flex items-center space-x-2 bg-green-500 hover:bg-green-600 px-8 py-4 rounded-full transition text-lg font-semibold"
