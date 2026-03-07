@@ -103,7 +103,7 @@ ${formData.message}
                     </div>
                     <div>
                       <h3 className="font-semibold text-pankh-navy mb-1">Email</h3>
-                      <p className="text-gray-600">info@pankh.tech</p>
+                      <p className="text-gray-600">ankeshs19@iimklive.com</p>
                     </div>
                   </div>
 
@@ -115,7 +115,7 @@ ${formData.message}
                     </div>
                     <div>
                       <h3 className="font-semibold text-pankh-navy mb-1">Phone</h3>
-                      <p className="text-gray-600">+91 XXXX XXXXXX</p>
+                      <p className="text-gray-600">+91 9746207344</p>
                     </div>
                   </div>
 
