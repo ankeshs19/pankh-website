@@ -26,7 +26,7 @@ export default function About() {
           <div className="max-w-4xl mx-auto">
             <div className="prose prose-lg max-w-none">
               <p className="text-lg text-gray-700 leading-relaxed mb-6">
-                Pankh Technology Pvt Limited is a company with a mission to democratize wealth creation 
+                Pankh Technology Pvt Limited is a startup recognized by Department for Promotion of Industry and Internal Trade (DIPP83254) with a mission to democratize wealth creation 
                 across India — particularly in underserved Tier 2, Tier 3 cities and rural markets. We 
                 believe every Indian deserves access to quality financial products, transparent advice, 
                 and the confidence to invest for their future.
