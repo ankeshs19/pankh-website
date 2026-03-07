@@ -62,7 +62,7 @@ export default function Footer() {
               </li>
               <li>
                 <a 
-                  href="https://wa.me/YOUR_WHATSAPP_NUMBER" 
+                  href="https://wa.me/919746207344" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="inline-flex items-center space-x-2 bg-green-500 hover:bg-green-600 px-4 py-2 rounded-full transition mt-2"
