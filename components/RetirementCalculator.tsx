@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -28,141 +28,194 @@ const STEPS = ['Profile & Income', 'Expenses', 'Savings & Investments', 'Insuran
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface Investment {
-  instrument: string;
-  value: string;
-  year: string;
-}
+interface Investment { instrument: string; value: string; year: string; }
 
 interface InvestmentResult extends Investment {
-  fv: number;
-  r: number;
-  isCurrent: boolean;
-  yearsToGrow: number;
+  fv: number; r: number; isCurrent: boolean; yearsToGrow: number;
 }
 
 interface Recommendation {
-  icon: string;
-  title: string;
-  detail: string;
+  icon: string; title: string; detail: string;
   priority: 'Critical' | 'High' | 'Medium' | 'On Track';
 }
 
 interface CalcResult {
-  corpusNeeded: number;
-  emergencyFund: number;
-  totalTarget: number;
-  bankFV: number;
-  investmentFV: number;
-  totalCurrentProjected: number;
-  gap: number;
-  monthlyGap: number;
-  yearsToRetire: number;
-  retirementYears: number;
-  annualExpenseAtRetirement: number;
-  investBreakdown: InvestmentResult[];
-  monthlyExpenseNow: number;
-  surplus: number;
+  corpusNeeded: number; emergencyFund: number; totalTarget: number;
+  bankFV: number; investmentFV: number; totalCurrentProjected: number;
+  gap: number; monthlyGap: number; yearsToRetire: number; retirementYears: number;
+  annualExpenseAtRetirement: number; investBreakdown: InvestmentResult[];
+  monthlyExpenseNow: number; surplus: number;
   sipAffordability: 'comfortable' | 'stretch' | 'tight' | 'deficit';
-  recommendations: Recommendation[];
-  monthlyIncome: number;
+  recommendations: Recommendation[]; monthlyIncome: number;
+  bankBalanceNum: number;
 }
 
-// ─── Helper UI components — OUTSIDE main component to prevent remount on render ──
+// ─── Helper UI — all defined OUTSIDE main component to prevent remount ────────
 
 const Card = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
-  <div className={`bg-white/5 border border-white/10 rounded-2xl p-6 ${className}`}>
+  <div className={`rounded-2xl p-6 ${className}`} style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)' }}>
     {children}
   </div>
 );
 
 const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-  <h2 className="text-2xl font-bold text-pankh-gold mb-1">{children}</h2>
+  <h2 className="text-2xl font-bold mb-1" style={{ color: '#d4a843' }}>{children}</h2>
 );
 
 const SectionSub = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-sm text-gray-400 mb-6">{children}</p>
+  <p className="text-sm mb-6" style={{ color: '#b0bec5' }}>{children}</p>
 );
 
 const Label = ({ children }: { children: React.ReactNode }) => (
-  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">
+  <label className="block text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#cfd8dc' }}>
     {children}
   </label>
 );
 
-// ✅ Defined OUTSIDE — stable reference across renders, no remount, no cursor jump
-const Input = ({
-  value, onChange, placeholder, prefix,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  prefix?: string;
+const Input = ({ value, onChange, placeholder, prefix }: {
+  value: string; onChange: (v: string) => void; placeholder?: string; prefix?: string;
 }) => (
   <div className="relative">
     {prefix && (
-      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-pankh-gold font-semibold pointer-events-none">
+      <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold pointer-events-none" style={{ color: '#d4a843' }}>
         {prefix}
       </span>
     )}
     <input
-      type="text"
-      inputMode="numeric"
-      value={value}
-      placeholder={placeholder}
+      type="text" inputMode="numeric" value={value} placeholder={placeholder}
       onChange={e => onChange(e.target.value)}
-      className={`w-full bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-600 text-sm outline-none focus:border-pankh-gold transition-colors py-3 ${prefix ? 'pl-8 pr-4' : 'px-4'}`}
+      className="w-full rounded-xl text-sm outline-none transition-all py-3"
+      style={{
+        background: 'rgba(255,255,255,0.08)',
+        border: '1px solid rgba(255,255,255,0.18)',
+        color: '#ffffff',
+        paddingLeft: prefix ? '2rem' : '1rem',
+        paddingRight: '1rem',
+      }}
+      onFocus={e => { e.target.style.borderColor = '#d4a843'; }}
+      onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.18)'; }}
     />
   </div>
 );
 
-const InsBtn = ({
-  active, variant, onClick, children,
-}: {
-  active: boolean;
-  variant: 'yes' | 'no';
-  onClick: () => void;
-  children: React.ReactNode;
+// ✅ Custom dropdown — fully styled, no browser-native black background
+const CustomSelect = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const groups = [
+    { label: 'Enter Current Market Value', items: INSTRUMENTS_CURRENT_VALUE },
+    { label: 'Enter Amount Invested', items: INSTRUMENTS_INVESTED },
+  ];
+
+  return (
+    <div ref={ref} className="relative">
+      {/* Trigger */}
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full rounded-xl text-sm text-left flex items-center justify-between py-3 px-4 transition-all"
+        style={{
+          background: 'rgba(255,255,255,0.08)',
+          border: `1px solid ${open ? '#d4a843' : 'rgba(255,255,255,0.18)'}`,
+          color: '#ffffff',
+        }}
+      >
+        <span>{value}</span>
+        <svg className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} style={{ color: '#d4a843' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {/* Dropdown panel */}
+      {open && (
+        <div
+          className="absolute z-50 w-full mt-1 rounded-xl overflow-hidden shadow-2xl"
+          style={{ background: '#1a3a5c', border: '1px solid rgba(212,168,67,0.4)' }}
+        >
+          {groups.map((group, gi) => (
+            <div key={gi}>
+              {/* Group header */}
+              <div
+                className="px-4 py-2 text-xs font-bold uppercase tracking-widest"
+                style={{ background: 'rgba(212,168,67,0.15)', color: '#d4a843', borderBottom: '1px solid rgba(255,255,255,0.08)' }}
+              >
+                {group.label}
+              </div>
+              {/* Options */}
+              {group.items.map(item => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => { onChange(item); setOpen(false); }}
+                  className="w-full text-left px-4 py-2.5 text-sm transition-all"
+                  style={{
+                    background: value === item ? 'rgba(212,168,67,0.2)' : 'transparent',
+                    color: value === item ? '#d4a843' : '#e8eaf0',
+                    borderBottom: '1px solid rgba(255,255,255,0.05)',
+                    fontWeight: value === item ? 600 : 400,
+                  }}
+                  onMouseEnter={e => { if (value !== item) (e.target as HTMLButtonElement).style.background = 'rgba(255,255,255,0.08)'; }}
+                  onMouseLeave={e => { if (value !== item) (e.target as HTMLButtonElement).style.background = 'transparent'; }}
+                >
+                  {item}
+                </button>
+              ))}
+              {gi < groups.length - 1 && <div style={{ height: 1, background: 'rgba(255,255,255,0.1)' }} />}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const InsBtn = ({ active, variant, onClick, children }: {
+  active: boolean; variant: 'yes' | 'no'; onClick: () => void; children: React.ReactNode;
 }) => (
-  <button
-    onClick={onClick}
-    className={`px-5 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all ${
+  <button onClick={onClick} className="px-5 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all"
+    style={
       variant === 'yes'
         ? active
-          ? 'bg-green-500 border-green-500 text-white'
-          : 'border-green-500/40 text-green-400 hover:border-green-500'
+          ? { background: '#22c55e', borderColor: '#22c55e', color: '#fff' }
+          : { background: 'transparent', borderColor: 'rgba(34,197,94,0.5)', color: '#86efac' }
         : active
-          ? 'bg-red-500 border-red-500 text-white'
-          : 'border-red-500/40 text-red-400 hover:border-red-500'
-    }`}
+          ? { background: '#ef4444', borderColor: '#ef4444', color: '#fff' }
+          : { background: 'transparent', borderColor: 'rgba(239,68,68,0.5)', color: '#fca5a5' }
+    }
   >
     {children}
   </button>
 );
 
-const priorityBadge = (p: string) => {
-  const map: Record<string, string> = {
-    Critical:   'bg-red-500/10 text-red-400 border border-red-500/30',
-    High:       'bg-pankh-gold/10 text-pankh-gold border border-pankh-gold/30',
-    Medium:     'bg-blue-500/10 text-blue-300 border border-blue-500/30',
-    'On Track': 'bg-green-500/10 text-green-400 border border-green-500/30',
+const priorityStyle = (p: string): React.CSSProperties => {
+  const map: Record<string, React.CSSProperties> = {
+    Critical:   { background: 'rgba(239,68,68,0.2)',   color: '#fca5a5', border: '1px solid rgba(239,68,68,0.4)' },
+    High:       { background: 'rgba(212,168,67,0.2)',  color: '#d4a843', border: '1px solid rgba(212,168,67,0.5)' },
+    Medium:     { background: 'rgba(96,165,250,0.2)',  color: '#93c5fd', border: '1px solid rgba(96,165,250,0.4)' },
+    'On Track': { background: 'rgba(34,197,94,0.2)',   color: '#86efac', border: '1px solid rgba(34,197,94,0.4)' },
   };
-  return `text-xs font-semibold px-3 py-1 rounded-full ${map[p] || ''}`;
+  return { ...map[p], borderRadius: 999, padding: '3px 12px', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' };
 };
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function RetirementCalculator() {
-
   const [step, setStep] = useState(0);
 
-  // Step 0
   const [age, setAge]                     = useState('');
   const [retireAge, setRetireAge]         = useState('');
   const [lifeExp, setLifeExp]             = useState('80');
   const [monthlyIncome, setMonthlyIncome] = useState('');
 
-  // Step 1
   const [grocery, setGrocery]         = useState('');
   const [fuel, setFuel]               = useState('');
   const [rent, setRent]               = useState('');
@@ -171,13 +224,11 @@ export default function RetirementCalculator() {
   const [medical, setMedical]         = useState('');
   const [other, setOther]             = useState('');
 
-  // Step 2
   const [bankBalance, setBankBalance] = useState('');
   const [investments, setInvestments] = useState<Investment[]>([
     { instrument: 'Mutual Fund', value: '', year: String(CURRENT_YEAR) },
   ]);
 
-  // Step 3
   const [insuredSelf, setInsuredSelf]         = useState<boolean | null>(null);
   const [hasSpouse, setHasSpouse]             = useState<boolean | null>(null);
   const [insuredSpouse, setInsuredSpouse]     = useState<boolean | null>(null);
@@ -188,26 +239,19 @@ export default function RetirementCalculator() {
 
   const [result, setResult] = useState<CalcResult | null>(null);
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
-
   const totalExpense = () =>
     [grocery, fuel, rent, electricity, kidsEdu, medical, other]
       .map(v => Number(v) || 0).reduce((a, b) => a + b, 0);
 
   const surplus = () => (Number(monthlyIncome) || 0) - totalExpense();
 
-  const addInv = () =>
-    setInvestments(p => [...p, { instrument: 'Mutual Fund', value: '', year: String(CURRENT_YEAR) }]);
-
-  const removeInv = (i: number) =>
-    setInvestments(p => p.filter((_, idx) => idx !== i));
-
+  const addInv    = () => setInvestments(p => [...p, { instrument: 'Mutual Fund', value: '', year: String(CURRENT_YEAR) }]);
+  const removeInv = (i: number) => setInvestments(p => p.filter((_, idx) => idx !== i));
   const updateInv = (i: number, field: keyof Investment, val: string) =>
     setInvestments(p => p.map((inv, idx) => idx === i ? { ...inv, [field]: val } : inv));
 
   const canProceed = () => {
-    if (step === 0) return age && monthlyIncome && retireAge
-      && Number(retireAge) >= 35 && Number(retireAge) > Number(age);
+    if (step === 0) return age && monthlyIncome && retireAge && Number(retireAge) >= 35 && Number(retireAge) > Number(age);
     if (step === 1) return totalExpense() > 0;
     if (step === 2) return bankBalance !== '';
     if (step === 3) return insuredSelf !== null
@@ -217,17 +261,13 @@ export default function RetirementCalculator() {
     return true;
   };
 
-  // ── Calculate ─────────────────────────────────────────────────────────────
-
   const calculate = () => {
     const currentAge      = Number(age);
     const retAge          = Number(retireAge);
     const lifeExpNum      = Number(lifeExp);
     const yearsToRetire   = retAge - currentAge;
     const retirementYears = lifeExpNum - retAge;
-    const inflation       = 0.07;
-    const preReturn       = 0.12;
-    const postReturn      = 0.065;
+    const inflation = 0.07, preReturn = 0.12, postReturn = 0.065;
 
     const monthlyExpenseNow         = totalExpense();
     const annualExpenseAtRetirement = monthlyExpenseNow * 12 * Math.pow(1 + inflation, yearsToRetire);
@@ -236,27 +276,26 @@ export default function RetirementCalculator() {
       ? annualExpenseAtRetirement * (1 - Math.pow(1 + realRate, -retirementYears)) / realRate
       : annualExpenseAtRetirement * retirementYears;
 
-    const emergencyFund        = annualExpenseAtRetirement / 2;
-    const totalTarget          = corpusNeeded + emergencyFund;
-    const bankFV               = (Number(bankBalance) || 0) * Math.pow(1.065, yearsToRetire);
+    const emergencyFund         = annualExpenseAtRetirement / 2;
+    const totalTarget           = corpusNeeded + emergencyFund;
+    const bankBalanceNum        = Number(bankBalance) || 0;
+    const bankFV                = bankBalanceNum * Math.pow(1.065, yearsToRetire);
 
     let investmentFV = 0;
     const investBreakdown: InvestmentResult[] = investments.map(inv => {
-      const val          = Number(inv.value) || 0;
-      const r            = RETURNS[inv.instrument] || 0.09;
-      const isCur        = isCurrentValue(inv.instrument);
+      const val = Number(inv.value) || 0;
+      const r   = RETURNS[inv.instrument] || 0.09;
+      const isCur = isCurrentValue(inv.instrument);
       const yearsAlready = Math.max(0, CURRENT_YEAR - Number(inv.year));
       const yearsToGrow  = isCur ? yearsToRetire : yearsToRetire + yearsAlready;
-      const fv           = val * Math.pow(1 + r, Math.max(yearsToGrow, 0));
+      const fv = val * Math.pow(1 + r, Math.max(yearsToGrow, 0));
       investmentFV += fv;
       return { ...inv, fv, r, isCurrent: isCur, yearsToGrow };
     });
 
     const totalCurrentProjected = bankFV + investmentFV;
     const gap        = totalTarget - totalCurrentProjected;
-    const monthlyGap = gap > 0
-      ? gap / ((Math.pow(1 + preReturn / 12, yearsToRetire * 12) - 1) / (preReturn / 12))
-      : 0;
+    const monthlyGap = gap > 0 ? gap / ((Math.pow(1 + preReturn / 12, yearsToRetire * 12) - 1) / (preReturn / 12)) : 0;
 
     const surplusVal = surplus();
     const sipAffordability: CalcResult['sipAffordability'] =
@@ -264,78 +303,71 @@ export default function RetirementCalculator() {
       monthlyGap <= surplusVal       ? 'comfortable' :
       monthlyGap <= surplusVal * 1.3 ? 'stretch'     : 'tight';
 
-    const recommendations = buildRecs(gap, monthlyGap, surplusVal, sipAffordability, currentAge, yearsToRetire);
-
     setResult({
-      corpusNeeded, emergencyFund, totalTarget,
-      bankFV, investmentFV, totalCurrentProjected,
-      gap, monthlyGap, yearsToRetire, retirementYears,
-      annualExpenseAtRetirement, investBreakdown,
-      monthlyExpenseNow, surplus: surplusVal,
-      sipAffordability, recommendations,
-      monthlyIncome: Number(monthlyIncome),
+      corpusNeeded, emergencyFund, totalTarget, bankFV, bankBalanceNum,
+      investmentFV, totalCurrentProjected, gap, monthlyGap,
+      yearsToRetire, retirementYears, annualExpenseAtRetirement,
+      investBreakdown, monthlyExpenseNow, surplus: surplusVal,
+      sipAffordability, monthlyIncome: Number(monthlyIncome),
+      recommendations: buildRecs(gap, monthlyGap, surplusVal, sipAffordability, currentAge, yearsToRetire),
     });
     setStep(4);
   };
 
-  const buildRecs = (
-    gap: number, monthlyGap: number, surplusVal: number,
-    aff: string, age: number, yearsToRetire: number,
-  ): Recommendation[] => {
+  const buildRecs = (gap: number, monthlyGap: number, surplusVal: number, aff: string, age: number, yearsToRetire: number): Recommendation[] => {
     const recs: Recommendation[] = [];
     const isNear = age >= 50;
 
-    if (aff === 'deficit')
-      recs.push({ icon: '🔴', title: 'Spending Exceeds Income', detail: `Expenses exceed income by ${formatINR(Math.abs(surplusVal))}. Close this gap before investing — debt erodes any savings you build.`, priority: 'Critical' });
-    else if (aff === 'tight')
-      recs.push({ icon: '⚠️', title: 'SIP Requires Lifestyle Adjustments', detail: `Surplus is ${formatINR(surplusVal)} but SIP needed is ${formatINR(monthlyGap)}. Reduce discretionary spend or add income streams.`, priority: 'High' });
-    else if (aff === 'stretch')
-      recs.push({ icon: '💡', title: 'Achievable with Discipline', detail: `Your surplus (${formatINR(surplusVal)}) nearly covers the required SIP (${formatINR(monthlyGap)}). A step-up SIP or annual bonus can bridge the gap.`, priority: 'Medium' });
-    else if (surplusVal > 0 && gap > 0)
-      recs.push({ icon: '✅', title: 'Surplus Covers the SIP', detail: `Monthly surplus of ${formatINR(surplusVal)} comfortably covers the required SIP of ${formatINR(monthlyGap)}. Start investing it immediately.`, priority: 'On Track' });
+    if (aff === 'deficit')        recs.push({ icon: '🔴', title: 'Spending Exceeds Income', detail: `Expenses exceed income by ${formatINR(Math.abs(surplusVal))}. Close this gap before investing — debt erodes any savings you build.`, priority: 'Critical' });
+    else if (aff === 'tight')     recs.push({ icon: '⚠️', title: 'SIP Requires Lifestyle Adjustments', detail: `Surplus is ${formatINR(surplusVal)} but SIP needed is ${formatINR(monthlyGap)}. Reduce discretionary spend or add income streams.`, priority: 'High' });
+    else if (aff === 'stretch')   recs.push({ icon: '💡', title: 'Achievable with Discipline', detail: `Your surplus (${formatINR(surplusVal)}) nearly covers the required SIP (${formatINR(monthlyGap)}). A step-up SIP or annual bonus allocation can bridge the gap.`, priority: 'Medium' });
+    else if (surplusVal > 0 && gap > 0) recs.push({ icon: '✅', title: 'Surplus Covers the SIP', detail: `Monthly surplus of ${formatINR(surplusVal)} comfortably covers the required SIP of ${formatINR(monthlyGap)}. Start investing immediately.`, priority: 'On Track' });
 
     if (gap > 0) {
-      if (!isNear)
-        recs.push({ icon: '📈', title: 'Equity Mutual Funds (SIP)', detail: `Start a SIP immediately — compounded over ${yearsToRetire} years at 12–14% CAGR via large-cap or flexi-cap funds, small monthly amounts grow significantly.`, priority: 'High' });
-      if (age < 60)
-        recs.push({ icon: '🏛️', title: 'NPS — National Pension System', detail: 'Extra ₹50,000 deduction under 80CCD(1B). Historically 9–12% returns. Lock-in enforces discipline.', priority: 'High' });
+      if (!isNear) recs.push({ icon: '📈', title: 'Equity Mutual Funds (SIP)', detail: `Start a SIP now — compounded at 12–14% CAGR over ${yearsToRetire} years via large-cap or flexi-cap funds. Even ₹5,000/month grows significantly.`, priority: 'High' });
+      if (age < 60) recs.push({ icon: '🏛️', title: 'NPS — National Pension System', detail: 'Extra ₹50,000 deduction under 80CCD(1B). Historically 9–12% returns. Lock-in enforces discipline and deters early withdrawal.', priority: 'High' });
       if (!isNear) {
-        recs.push({ icon: '🔒', title: 'PPF — Public Provident Fund', detail: '7.1% tax-free, EEE status. Max ₹1.5L/year. Lock-in prevents early withdrawal — a feature, not a bug.', priority: 'Medium' });
-        recs.push({ icon: '⚡', title: 'ELSS — Tax-Saving Mutual Fund', detail: 'Shortest 80C lock-in at 3 years. Market-linked 12–15% returns. Doubles as tax saving under Section 80C.', priority: 'Medium' });
+        recs.push({ icon: '🔒', title: 'PPF — Public Provident Fund', detail: '7.1% tax-free with EEE status. Max ₹1.5L/year. Government-backed. The 15-year lock-in is a feature, not a bug.', priority: 'Medium' });
+        recs.push({ icon: '⚡', title: 'ELSS — Tax-Saving Mutual Fund', detail: 'Shortest 80C lock-in at 3 years. Market-linked 12–15% returns. Doubles as annual tax saving under Section 80C.', priority: 'Medium' });
       }
       if (isNear) {
         recs.push({ icon: '🏦', title: 'Senior Citizens Savings Scheme', detail: 'Available post-60. ~8.2% quarterly government-backed interest. Safe and liquid for post-retirement cash flow.', priority: 'High' });
-        recs.push({ icon: '📊', title: 'Debt Mutual Funds + SWP', detail: 'Systematic Withdrawal Plan is more tax-efficient than FD interest for post-retirement income.', priority: 'High' });
+        recs.push({ icon: '📊', title: 'Debt Mutual Funds + SWP', detail: 'A Systematic Withdrawal Plan is more tax-efficient than FD interest for post-retirement income. Begin shifting equity to debt now.', priority: 'High' });
       }
     } else {
-      recs.push({ icon: '🎯', title: 'On Track — Focus on Rebalancing', detail: 'Projected corpus exceeds target. Shift from equity to debt gradually as retirement nears.', priority: 'On Track' });
+      recs.push({ icon: '🎯', title: 'On Track — Focus on Rebalancing', detail: 'Projected corpus exceeds target. As retirement nears, progressively shift from equity to debt to protect what you have built.', priority: 'On Track' });
     }
 
-    if (insuredSelf === false)
-      recs.push({ icon: '🚨', title: 'No Health Insurance for You', detail: 'Medical inflation is 8–10% p.a. A single hospitalisation can wipe years of savings. Get a ₹10–25L policy immediately.', priority: 'Critical' });
-    if (hasSpouse && insuredSpouse === false)
-      recs.push({ icon: '🚨', title: 'Spouse Not Covered', detail: 'A critical illness for your spouse directly hits your retirement corpus. Add to a family floater or get a separate policy.', priority: 'Critical' });
-    if (hasChildren && insuredChildren === false)
-      recs.push({ icon: '⚠️', title: 'Children Not Insured', detail: 'Adding children to a family floater is low cost at young ages — paediatric emergencies are expensive and unpredictable.', priority: 'High' });
-    if (hasParents && insuredParents === false)
-      recs.push({ icon: '🚨', title: 'Parents Not Insured', detail: 'Senior citizen hospitalisation can cost ₹5–30L per incident. Without a dedicated parent plan, your corpus absorbs these shocks.', priority: 'Critical' });
+    if (insuredSelf === false)              recs.push({ icon: '🚨', title: 'No Health Insurance for You',  detail: 'Medical inflation is 8–10% p.a. A single hospitalisation can wipe years of savings. Get a ₹10–25L individual policy immediately.', priority: 'Critical' });
+    if (hasSpouse && insuredSpouse === false)   recs.push({ icon: '🚨', title: 'Spouse Not Covered',          detail: 'A critical illness for your spouse directly erodes your retirement corpus. Add to a family floater or get a separate policy now.', priority: 'Critical' });
+    if (hasChildren && insuredChildren === false) recs.push({ icon: '⚠️', title: 'Children Not Insured',        detail: 'Adding children to a family floater is low cost at young ages. Paediatric emergencies are expensive and unpredictable.', priority: 'High' });
+    if (hasParents && insuredParents === false)   recs.push({ icon: '🚨', title: 'Parents Not Insured',         detail: 'Senior citizen hospitalisation can cost ₹5–30L per incident. Without a dedicated parent plan, your corpus absorbs every shock.', priority: 'Critical' });
 
     return recs;
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // shared inline styles
+  const statCard: React.CSSProperties = { background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '14px 10px', textAlign: 'center' };
+  const statLabel: React.CSSProperties = { fontSize: 10, color: '#90a4ae', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, display: 'block' };
+
+  const affordBadge = {
+    comfortable: { bg: 'rgba(34,197,94,0.2)',  color: '#86efac', border: '1px solid rgba(34,197,94,0.4)',  text: '✓ Comfortable' },
+    stretch:     { bg: 'rgba(212,168,67,0.2)', color: '#d4a843', border: '1px solid rgba(212,168,67,0.5)', text: '~ Achievable' },
+    tight:       { bg: 'rgba(239,68,68,0.2)',  color: '#fca5a5', border: '1px solid rgba(239,68,68,0.4)',  text: '⚠ Tight' },
+    deficit:     { bg: 'rgba(239,68,68,0.2)',  color: '#fca5a5', border: '1px solid rgba(239,68,68,0.4)',  text: '✗ Deficit' },
+  };
 
   return (
-    <div className="text-white">
+    <div style={{ color: '#e8eaf0', fontFamily: 'inherit' }}>
       <div className="container mx-auto px-4 py-16 max-w-2xl">
 
-        {/* Page header */}
+        {/* Header */}
         <div className="text-center mb-12">
-          <p className="text-xs font-semibold tracking-widest text-pankh-gold uppercase mb-3">Free Tool</p>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Retirement <span className="text-pankh-gold">Calculator</span>
+          <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: '#d4a843' }}>Free Tool</p>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: '#ffffff' }}>
+            Retirement <span style={{ color: '#d4a843' }}>Calculator</span>
           </h1>
-          <p className="text-gray-300 text-lg">A comprehensive retirement planner for Indian investors</p>
+          <p className="text-lg" style={{ color: '#b0bec5' }}>A comprehensive retirement planner for Indian investors</p>
         </div>
 
         {/* Step bar */}
@@ -343,22 +375,22 @@ export default function RetirementCalculator() {
           {STEPS.map((s, i) => (
             <div key={i} className="flex items-center gap-2">
               <div className="flex flex-col items-center gap-1.5">
-                <div className={`rounded-full transition-all ${
-                  i === step ? 'w-3 h-3 bg-pankh-gold' :
-                  i < step   ? 'w-2.5 h-2.5 bg-green-400' : 'w-2 h-2 bg-white/20'
-                }`} />
-                <span className={`text-[9px] font-semibold tracking-widest uppercase whitespace-nowrap ${
-                  i === step ? 'text-pankh-gold' : i < step ? 'text-green-400/60' : 'text-white/20'
-                }`}>{s}</span>
+                <div style={{
+                  borderRadius: '50%', transition: 'all 0.3s',
+                  width: i === step ? 12 : 8, height: i === step ? 12 : 8,
+                  background: i === step ? '#d4a843' : i < step ? '#4ade80' : 'rgba(255,255,255,0.2)',
+                }} />
+                <span style={{
+                  fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap',
+                  color: i === step ? '#d4a843' : i < step ? 'rgba(74,222,128,0.7)' : 'rgba(255,255,255,0.25)',
+                }}>{s}</span>
               </div>
-              {i < STEPS.length - 1 && (
-                <div className={`w-7 h-px mb-3.5 ${i < step ? 'bg-green-400/30' : 'bg-white/10'}`} />
-              )}
+              {i < STEPS.length - 1 && <div style={{ width: 28, height: 1, background: i < step ? 'rgba(74,222,128,0.3)' : 'rgba(255,255,255,0.1)', marginBottom: 14 }} />}
             </div>
           ))}
         </div>
 
-        {/* ── STEP 0: Profile & Income ── */}
+        {/* ── STEP 0 ── */}
         {step === 0 && (
           <Card>
             <SectionTitle>Profile & Income</SectionTitle>
@@ -372,12 +404,8 @@ export default function RetirementCalculator() {
               <div>
                 <Label>Retirement Age (min 35)</Label>
                 <Input value={retireAge} onChange={setRetireAge} placeholder="e.g. 50" />
-                {retireAge && Number(retireAge) < 35 && (
-                  <p className="text-red-400 text-xs mt-1">Minimum retirement age is 35</p>
-                )}
-                {retireAge && Number(retireAge) >= 35 && Number(retireAge) <= Number(age) && (
-                  <p className="text-red-400 text-xs mt-1">Must be greater than current age</p>
-                )}
+                {retireAge && Number(retireAge) < 35 && <p className="text-xs mt-1" style={{ color: '#fca5a5' }}>Minimum retirement age is 35</p>}
+                {retireAge && Number(retireAge) >= 35 && Number(retireAge) <= Number(age) && <p className="text-xs mt-1" style={{ color: '#fca5a5' }}>Must be greater than current age</p>}
               </div>
             </div>
 
@@ -386,82 +414,63 @@ export default function RetirementCalculator() {
               <div className="flex gap-2 flex-wrap">
                 {['75', '80', '85', '90'].map(v => (
                   <button key={v} onClick={() => setLifeExp(v)}
-                    className={`px-5 py-2 rounded-full text-sm font-semibold border-2 transition-all ${
-                      lifeExp === v
-                        ? 'bg-pankh-gold border-pankh-gold text-pankh-navy'
-                        : 'border-white/20 text-gray-400 hover:border-pankh-gold/50'
-                    }`}>
+                    className="px-5 py-2 rounded-full text-sm font-semibold border-2 transition-all"
+                    style={lifeExp === v
+                      ? { background: '#d4a843', borderColor: '#d4a843', color: '#0f2044' }
+                      : { background: 'transparent', borderColor: 'rgba(255,255,255,0.2)', color: '#cfd8dc' }
+                    }>
                     {v} yrs
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className="bg-pankh-gold/5 border border-pankh-gold/20 rounded-xl p-5 mb-5">
+            <div className="rounded-xl p-5 mb-5" style={{ background: 'rgba(212,168,67,0.08)', border: '1px solid rgba(212,168,67,0.25)' }}>
               <Label>Monthly Take-Home Income</Label>
-              <p className="text-xs text-gray-500 mb-3">Post-tax salary, business income, rent received, or any regular monthly inflow</p>
+              <p className="text-xs mb-3" style={{ color: '#90a4ae' }}>Post-tax salary, business income, rent received, or any regular monthly inflow</p>
               <Input value={monthlyIncome} onChange={setMonthlyIncome} placeholder="e.g. 150000" prefix="₹" />
             </div>
 
             {age && retireAge && Number(retireAge) > Number(age) && Number(retireAge) >= 35 && (
-              <div className="bg-pankh-gold/10 border-l-4 border-pankh-gold rounded-r-xl px-5 py-4">
-                <span className="text-gray-300">You have </span>
-                <span className="text-xl font-bold text-pankh-gold">{Number(retireAge) - Number(age)} years</span>
-                <span className="text-gray-300"> to build your corpus and </span>
-                <span className="text-xl font-bold text-pankh-gold">{Number(lifeExp) - Number(retireAge)} years</span>
-                <span className="text-gray-300"> of retirement to fund.</span>
+              <div className="rounded-r-xl px-5 py-4" style={{ background: 'rgba(212,168,67,0.1)', borderLeft: '4px solid #d4a843' }}>
+                <span style={{ color: '#cfd8dc' }}>You have </span>
+                <span className="text-xl font-bold" style={{ color: '#d4a843' }}>{Number(retireAge) - Number(age)} years</span>
+                <span style={{ color: '#cfd8dc' }}> to build your corpus and </span>
+                <span className="text-xl font-bold" style={{ color: '#d4a843' }}>{Number(lifeExp) - Number(retireAge)} years</span>
+                <span style={{ color: '#cfd8dc' }}> of retirement to fund.</span>
               </div>
             )}
           </Card>
         )}
 
-        {/* ── STEP 1: Expenses ── */}
+        {/* ── STEP 1 ── */}
         {step === 1 && (
           <Card>
             <SectionTitle>Monthly Expenditure</SectionTitle>
             <SectionSub>Current monthly spending — inflated at 7% p.a. to your retirement date</SectionSub>
-
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>🛒 Groceries</Label>
-                <Input value={grocery} onChange={setGrocery} placeholder="0" prefix="₹" />
-              </div>
-              <div>
-                <Label>⛽ Fuel / Transport</Label>
-                <Input value={fuel} onChange={setFuel} placeholder="0" prefix="₹" />
-              </div>
-              <div>
-                <Label>🏠 Rent / Home Loan</Label>
-                <Input value={rent} onChange={setRent} placeholder="0" prefix="₹" />
-              </div>
-              <div>
-                <Label>💡 Electricity & Utilities</Label>
-                <Input value={electricity} onChange={setElectricity} placeholder="0" prefix="₹" />
-              </div>
-              <div>
-                <Label>🎓 Kids Education</Label>
-                <Input value={kidsEdu} onChange={setKidsEdu} placeholder="0" prefix="₹" />
-              </div>
-              <div>
-                <Label>🏥 Medical / OPD</Label>
-                <Input value={medical} onChange={setMedical} placeholder="0" prefix="₹" />
-              </div>
-              <div>
-                <Label>📦 Other Expenses</Label>
-                <Input value={other} onChange={setOther} placeholder="0" prefix="₹" />
-              </div>
+              {([
+                ['🛒 Groceries', grocery, setGrocery], ['⛽ Fuel / Transport', fuel, setFuel],
+                ['🏠 Rent / Home Loan', rent, setRent], ['💡 Electricity & Utilities', electricity, setElectricity],
+                ['🎓 Kids Education', kidsEdu, setKidsEdu], ['🏥 Medical / OPD', medical, setMedical],
+                ['📦 Other Expenses', other, setOther],
+              ] as [string, string, (v: string) => void][]).map(([lbl, val, setter]) => (
+                <div key={lbl}>
+                  <Label>{lbl}</Label>
+                  <Input value={val} onChange={setter} placeholder="0" prefix="₹" />
+                </div>
+              ))}
             </div>
-
             {monthlyIncome && totalExpense() > 0 && (
               <div className="grid grid-cols-3 gap-3 mt-6">
                 {([
-                  ['Income',   Number(monthlyIncome), 'text-white'],
-                  ['Expenses', totalExpense(),         'text-red-400'],
-                  ['Surplus',  surplus(),              surplus() >= 0 ? 'text-green-400' : 'text-red-400'],
+                  ['Income', Number(monthlyIncome), '#ffffff'],
+                  ['Expenses', totalExpense(), '#fca5a5'],
+                  ['Surplus', surplus(), surplus() >= 0 ? '#86efac' : '#fca5a5'],
                 ] as [string, number, string][]).map(([lbl, val, color]) => (
-                  <div key={lbl} className="bg-white/5 rounded-xl p-4 text-center">
-                    <p className="text-xs text-gray-500 uppercase tracking-widest mb-2">{lbl}</p>
-                    <p className={`text-lg font-bold ${color}`}>{formatINR(val)}</p>
+                  <div key={lbl} style={statCard}>
+                    <span style={statLabel}>{lbl}</span>
+                    <span className="text-lg font-bold" style={{ color }}>{formatINR(val)}</span>
                   </div>
                 ))}
               </div>
@@ -469,48 +478,37 @@ export default function RetirementCalculator() {
           </Card>
         )}
 
-        {/* ── STEP 2: Savings & Investments ── */}
+        {/* ── STEP 2 ── */}
         {step === 2 && (
           <div className="space-y-4">
             <Card>
               <SectionTitle>Bank Balance</SectionTitle>
               <SectionSub>Liquid cash in savings & current accounts only</SectionSub>
               <Input value={bankBalance} onChange={setBankBalance} placeholder="e.g. 200000" prefix="₹" />
-              <p className="text-xs text-gray-600 mt-2">Do not include FDs, mutual funds, or any invested amounts here.</p>
+              <p className="text-xs mt-2" style={{ color: '#90a4ae' }}>Do not include FDs, mutual funds, or any invested amounts here.</p>
             </Card>
 
             <Card>
               <SectionTitle>Existing Investments</SectionTitle>
-              <div className="mb-5 space-y-1">
-                <p className="text-sm text-gray-300">
-                  For <span className="text-pankh-gold font-semibold">MF, EPF, NPS, ETF, Stocks, Gold</span> — enter the{' '}
-                  <span className="text-white font-semibold">current market value</span> (past returns already embedded).
+              <div className="mb-5 space-y-2">
+                <p className="text-sm" style={{ color: '#cfd8dc' }}>
+                  For <span style={{ color: '#d4a843', fontWeight: 700 }}>MF, EPF, NPS, ETF, Stocks, Gold</span> — enter the{' '}
+                  <span style={{ color: '#ffffff', fontWeight: 700 }}>current market value</span> (past returns already embedded).
                 </p>
-                <p className="text-sm text-gray-300">
-                  For <span className="text-gray-400 font-semibold">PPF, Land, FD, ELSS etc.</span> — enter the{' '}
-                  <span className="text-white font-semibold">total amount invested so far</span> + start year.
+                <p className="text-sm" style={{ color: '#cfd8dc' }}>
+                  For <span style={{ color: '#b0bec5', fontWeight: 600 }}>PPF, Land, FD, ELSS etc.</span> — enter the{' '}
+                  <span style={{ color: '#ffffff', fontWeight: 700 }}>total amount invested so far</span> + start year.
                 </p>
               </div>
 
               {investments.map((inv, i) => {
                 const isCur = isCurrentValue(inv.instrument);
                 return (
-                  <div key={i} className="bg-white/5 rounded-xl p-4 mb-3">
-                    <div className={`grid gap-3 items-end mb-2 ${isCur ? 'grid-cols-[2fr_2fr_36px]' : 'grid-cols-[2fr_1.5fr_0.8fr_36px]'}`}>
+                  <div key={i} className="rounded-xl p-4 mb-3" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <div className={`grid gap-3 items-end mb-3 ${isCur ? 'grid-cols-[2fr_2fr_36px]' : 'grid-cols-[2fr_1.5fr_0.8fr_36px]'}`}>
                       <div>
                         <Label>Instrument</Label>
-                        <select
-                          value={inv.instrument}
-                          onChange={e => updateInv(i, 'instrument', e.target.value)}
-                          className="w-full bg-white/5 border border-white/15 rounded-xl text-white text-sm outline-none focus:border-pankh-gold transition-colors py-3 px-4"
-                        >
-                          <optgroup label="── Current Market Value ──">
-                            {INSTRUMENTS_CURRENT_VALUE.map(ins => <option key={ins} className="bg-gray-900">{ins}</option>)}
-                          </optgroup>
-                          <optgroup label="── Amount Invested ──">
-                            {INSTRUMENTS_INVESTED.map(ins => <option key={ins} className="bg-gray-900">{ins}</option>)}
-                          </optgroup>
-                        </select>
+                        <CustomSelect value={inv.instrument} onChange={v => updateInv(i, 'instrument', v)} />
                       </div>
                       <div>
                         <Label>{isCur ? 'Current Market Value' : 'Amount Invested (₹)'}</Label>
@@ -524,12 +522,15 @@ export default function RetirementCalculator() {
                       )}
                       <div className={isCur ? '' : 'pt-6'}>
                         <button onClick={() => removeInv(i)}
-                          className="w-9 h-11 bg-white/5 hover:bg-red-500/20 border border-white/10 rounded-lg text-gray-500 hover:text-red-400 transition-all text-lg">
+                          className="w-9 h-11 rounded-lg text-lg transition-all"
+                          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', color: '#90a4ae' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.25)'; (e.currentTarget as HTMLButtonElement).style.color = '#fca5a5'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)'; (e.currentTarget as HTMLButtonElement).style.color = '#90a4ae'; }}>
                           ×
                         </button>
                       </div>
                     </div>
-                    <p className="text-xs text-gray-600">
+                    <p className="text-xs" style={{ color: '#90a4ae' }}>
                       {isCur
                         ? `Current value → projected at ${((RETURNS[inv.instrument] || 0.09) * 100).toFixed(1)}% p.a. forward to retirement only`
                         : `Amount invested → compounded at ${((RETURNS[inv.instrument] || 0.09) * 100).toFixed(1)}% p.a. from ${inv.year} to retirement`}
@@ -539,14 +540,17 @@ export default function RetirementCalculator() {
               })}
 
               <button onClick={addInv}
-                className="border border-white/20 hover:border-pankh-gold/50 text-gray-400 hover:text-pankh-gold px-5 py-2.5 rounded-full text-sm font-semibold transition-all">
+                className="px-5 py-2.5 rounded-full text-sm font-semibold transition-all"
+                style={{ border: '1px solid rgba(255,255,255,0.2)', color: '#cfd8dc', background: 'transparent' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#d4a843'; (e.currentTarget as HTMLButtonElement).style.color = '#d4a843'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.2)'; (e.currentTarget as HTMLButtonElement).style.color = '#cfd8dc'; }}>
                 + Add Investment
               </button>
 
               {investments.some(i => Number(i.value) > 0) && (
-                <div className="flex justify-between items-center mt-5 bg-white/5 rounded-xl px-5 py-4">
-                  <span className="text-gray-400 text-sm">Total Value Entered</span>
-                  <span className="text-xl font-bold text-pankh-gold">
+                <div className="flex justify-between items-center mt-5 rounded-xl px-5 py-4" style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)' }}>
+                  <span className="text-sm" style={{ color: '#cfd8dc' }}>Total Value Entered</span>
+                  <span className="text-xl font-bold" style={{ color: '#d4a843' }}>
                     {formatINR(investments.reduce((s, i) => s + (Number(i.value) || 0), 0))}
                   </span>
                 </div>
@@ -555,78 +559,53 @@ export default function RetirementCalculator() {
           </div>
         )}
 
-        {/* ── STEP 3: Insurance ── */}
+        {/* ── STEP 3 ── */}
         {step === 3 && (
           <Card>
             <SectionTitle>Insurance Coverage</SectionTitle>
             <SectionSub>Uninsured medical emergencies are the #1 silent threat to retirement savings</SectionSub>
-
-            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 mb-7">
-              <p className="text-sm text-yellow-300 leading-relaxed">
+            <div className="rounded-xl p-4 mb-7" style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.25)' }}>
+              <p className="text-sm leading-relaxed" style={{ color: '#fde68a' }}>
                 ⚠️ Medical inflation in India runs at 8–10% per year. One uninsured hospitalisation can instantly wipe ₹5–30L from your savings — before your retirement corpus gets a chance to grow.
               </p>
             </div>
 
-            {/* Self */}
-            <div className="pb-6 border-b border-white/10 mb-6">
-              <Label>Do you have health insurance for yourself?</Label>
-              <div className="flex gap-3">
-                <InsBtn active={insuredSelf === true}  variant="yes" onClick={() => setInsuredSelf(true)}>✓ Yes, Covered</InsBtn>
-                <InsBtn active={insuredSelf === false} variant="no"  onClick={() => setInsuredSelf(false)}>✗ Not Covered</InsBtn>
-              </div>
-              {insuredSelf === false && <p className="text-red-400 text-xs mt-2">🚨 This is critical — an uninsured illness can derail your entire retirement plan.</p>}
-            </div>
-
-            {/* Spouse */}
-            <div className="pb-6 border-b border-white/10 mb-6">
-              <Label>Do you have a spouse / partner?</Label>
-              <div className="flex gap-3 mb-4">
-                <InsBtn active={hasSpouse === true}  variant="yes" onClick={() => setHasSpouse(true)}>Yes</InsBtn>
-                <InsBtn active={hasSpouse === false} variant="no"  onClick={() => { setHasSpouse(false); setInsuredSpouse(null); }}>No</InsBtn>
-              </div>
-              {hasSpouse && (<>
-                <Label>Is your spouse covered?</Label>
+            {[
+              { q: 'Do you have health insurance for yourself?', state: insuredSelf, set: setInsuredSelf, warn: '🚨 This is critical — an uninsured illness can derail your entire retirement plan.', alwaysShow: true },
+            ].map((item, idx) => (
+              <div key={idx} className="pb-6 mb-6" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                <Label>{item.q}</Label>
                 <div className="flex gap-3">
-                  <InsBtn active={insuredSpouse === true}  variant="yes" onClick={() => setInsuredSpouse(true)}>✓ Yes, Covered</InsBtn>
-                  <InsBtn active={insuredSpouse === false} variant="no"  onClick={() => setInsuredSpouse(false)}>✗ Not Covered</InsBtn>
+                  <InsBtn active={item.state === true}  variant="yes" onClick={() => item.set(true)}>✓ Yes, Covered</InsBtn>
+                  <InsBtn active={item.state === false} variant="no"  onClick={() => item.set(false)}>✗ Not Covered</InsBtn>
                 </div>
-                {insuredSpouse === false && <p className="text-red-400 text-xs mt-2">⚠️ Add to a family floater or separate policy immediately.</p>}
-              </>)}
-            </div>
-
-            {/* Children */}
-            <div className="pb-6 border-b border-white/10 mb-6">
-              <Label>Do you have children?</Label>
-              <div className="flex gap-3 mb-4">
-                <InsBtn active={hasChildren === true}  variant="yes" onClick={() => setHasChildren(true)}>Yes</InsBtn>
-                <InsBtn active={hasChildren === false} variant="no"  onClick={() => { setHasChildren(false); setInsuredChildren(null); }}>No</InsBtn>
+                {item.state === false && <p className="text-xs mt-2" style={{ color: '#fca5a5' }}>{item.warn}</p>}
               </div>
-              {hasChildren && (<>
-                <Label>Are your children covered?</Label>
-                <div className="flex gap-3">
-                  <InsBtn active={insuredChildren === true}  variant="yes" onClick={() => setInsuredChildren(true)}>✓ Yes, Covered</InsBtn>
-                  <InsBtn active={insuredChildren === false} variant="no"  onClick={() => setInsuredChildren(false)}>✗ Not Covered</InsBtn>
-                </div>
-                {insuredChildren === false && <p className="text-red-400 text-xs mt-2">⚠️ Add to a family floater — low additional cost when done young.</p>}
-              </>)}
-            </div>
+            ))}
 
-            {/* Parents */}
-            <div>
-              <Label>Do you have dependent parents?</Label>
-              <div className="flex gap-3 mb-4">
-                <InsBtn active={hasParents === true}  variant="yes" onClick={() => setHasParents(true)}>Yes</InsBtn>
-                <InsBtn active={hasParents === false} variant="no"  onClick={() => { setHasParents(false); setInsuredParents(null); }}>No</InsBtn>
-              </div>
-              {hasParents && (<>
-                <Label>Are your parents covered?</Label>
-                <div className="flex gap-3">
-                  <InsBtn active={insuredParents === true}  variant="yes" onClick={() => setInsuredParents(true)}>✓ Yes, Covered</InsBtn>
-                  <InsBtn active={insuredParents === false} variant="no"  onClick={() => setInsuredParents(false)}>✗ Not Covered</InsBtn>
+            {[
+              { q: 'Do you have a spouse / partner?', hasState: hasSpouse, hasSet: (v: boolean) => { setHasSpouse(v); if (!v) setInsuredSpouse(null); }, q2: 'Is your spouse covered?', insState: insuredSpouse, insSet: setInsuredSpouse, warn: '⚠️ Add to a family floater or separate policy immediately.' },
+              { q: 'Do you have children?',           hasState: hasChildren, hasSet: (v: boolean) => { setHasChildren(v); if (!v) setInsuredChildren(null); }, q2: 'Are your children covered?', insState: insuredChildren, insSet: setInsuredChildren, warn: '⚠️ Add to a family floater — low additional cost when done young.' },
+              { q: 'Do you have dependent parents?',  hasState: hasParents,  hasSet: (v: boolean) => { setHasParents(v);  if (!v) setInsuredParents(null); },  q2: 'Are your parents covered?',  insState: insuredParents,  insSet: setInsuredParents,  warn: '🚨 Without a dedicated parent plan, 1–2 incidents can erode ₹10–30L from your corpus.' },
+            ].map((item, idx, arr) => (
+              <div key={idx} className={`mb-6 pb-6 ${idx < arr.length - 1 ? '' : ''}`} style={{ borderBottom: idx < arr.length - 1 ? '1px solid rgba(255,255,255,0.1)' : 'none' }}>
+                <Label>{item.q}</Label>
+                <div className="flex gap-3 mb-4">
+                  <InsBtn active={item.hasState === true}  variant="yes" onClick={() => item.hasSet(true)}>Yes</InsBtn>
+                  <InsBtn active={item.hasState === false} variant="no"  onClick={() => item.hasSet(false)}>No</InsBtn>
                 </div>
-                {insuredParents === false && <p className="text-red-400 text-xs mt-2">🚨 Without a dedicated parent plan, 1–2 major incidents can erode ₹10–30L from your corpus directly.</p>}
-              </>)}
-            </div>
+                {item.hasState && (
+                  <>
+                    <Label>{item.q2}</Label>
+                    <div className="flex gap-3">
+                      <InsBtn active={item.insState === true}  variant="yes" onClick={() => item.insSet(true)}>✓ Yes, Covered</InsBtn>
+                      <InsBtn active={item.insState === false} variant="no"  onClick={() => item.insSet(false)}>✗ Not Covered</InsBtn>
+                    </div>
+                    {item.insState === false && <p className="text-xs mt-2" style={{ color: '#fca5a5' }}>{item.warn}</p>}
+                  </>
+                )}
+              </div>
+            ))}
           </Card>
         )}
 
@@ -635,24 +614,24 @@ export default function RetirementCalculator() {
           <div className="space-y-4">
 
             {/* Hero corpus */}
-            <div className="bg-gradient-to-br from-pankh-gold/20 to-pankh-gold/5 border border-pankh-gold/30 rounded-2xl p-6">
-              <div className="text-center pb-6 border-b border-white/10">
-                <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-3">Corpus Required at Retirement</p>
-                <p className="text-5xl font-bold text-pankh-gold">{formatINR(result.totalTarget)}</p>
-                <p className="text-sm text-gray-400 mt-3">
-                  to sustain <span className="text-white font-semibold">{formatINR(result.annualExpenseAtRetirement / 12)}/month</span>{' '}
+            <div className="rounded-2xl p-6" style={{ background: 'linear-gradient(135deg, rgba(212,168,67,0.18) 0%, rgba(212,168,67,0.06) 100%)', border: '1px solid rgba(212,168,67,0.35)' }}>
+              <div className="text-center pb-6" style={{ borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
+                <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#90a4ae' }}>Corpus Required at Retirement</p>
+                <p className="text-5xl font-bold" style={{ color: '#d4a843' }}>{formatINR(result.totalTarget)}</p>
+                <p className="text-sm mt-3" style={{ color: '#b0bec5' }}>
+                  to sustain <span style={{ color: '#ffffff', fontWeight: 700 }}>{formatINR(result.annualExpenseAtRetirement / 12)}/month</span>{' '}
                   (today's {formatINR(result.monthlyExpenseNow)}/month at 7% inflation) for {result.retirementYears} years
                 </p>
               </div>
               <div className="grid grid-cols-3 gap-3 pt-5">
                 {([
-                  ['Retirement\nCorpus',        result.corpusNeeded,          'text-white'],
-                  ['Emergency\nBuffer (6 mo.)', result.emergencyFund,         'text-yellow-300'],
-                  ['Your Current\nProjection',  result.totalCurrentProjected, result.totalCurrentProjected >= result.totalTarget ? 'text-green-400' : 'text-red-400'],
+                  ['Retirement\nCorpus',        result.corpusNeeded,          '#ffffff'],
+                  ['Emergency\nBuffer (6 mo.)', result.emergencyFund,         '#fde68a'],
+                  ['Your Current\nProjection',  result.totalCurrentProjected, result.totalCurrentProjected >= result.totalTarget ? '#86efac' : '#fca5a5'],
                 ] as [string, number, string][]).map(([label, val, color]) => (
-                  <div key={label} className="bg-white/5 rounded-xl p-4 text-center">
-                    <p className="text-[9px] text-gray-500 uppercase tracking-wider mb-2 whitespace-pre-line">{label}</p>
-                    <p className={`text-base font-bold ${color}`}>{formatINR(val)}</p>
+                  <div key={label} style={statCard}>
+                    <span style={{ ...statLabel, whiteSpace: 'pre-line' }}>{label}</span>
+                    <span className="text-base font-bold" style={{ color }}>{formatINR(val)}</span>
                   </div>
                 ))}
               </div>
@@ -660,33 +639,30 @@ export default function RetirementCalculator() {
 
             {/* Cash flow */}
             <Card>
-              <h3 className="text-lg font-bold text-pankh-gold mb-4">Monthly Cash Flow</h3>
+              <h3 className="text-lg font-bold mb-4" style={{ color: '#d4a843' }}>Monthly Cash Flow</h3>
               <div className="grid grid-cols-3 gap-3 mb-4">
                 {([
-                  ['Income',   result.monthlyIncome,     'text-white'],
-                  ['Expenses', result.monthlyExpenseNow, 'text-red-400'],
-                  ['Surplus',  result.surplus,           result.surplus >= 0 ? 'text-green-400' : 'text-red-400'],
+                  ['Income', result.monthlyIncome, '#ffffff'],
+                  ['Expenses', result.monthlyExpenseNow, '#fca5a5'],
+                  ['Surplus', result.surplus, result.surplus >= 0 ? '#86efac' : '#fca5a5'],
                 ] as [string, number, string][]).map(([lbl, val, color]) => (
-                  <div key={lbl} className="bg-white/5 rounded-xl p-4 text-center">
-                    <p className="text-[9px] text-gray-500 uppercase tracking-wider mb-2">{lbl}</p>
-                    <p className={`text-base font-bold ${color}`}>{formatINR(val)}</p>
+                  <div key={lbl} style={statCard}>
+                    <span style={statLabel}>{lbl}</span>
+                    <span className="text-base font-bold" style={{ color }}>{formatINR(val)}</span>
                   </div>
                 ))}
               </div>
               {result.gap > 0 && (
-                <div className="flex justify-between items-center bg-white/5 rounded-xl px-5 py-4 border border-white/10">
+                <div className="flex justify-between items-center rounded-xl px-5 py-4" style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)' }}>
                   <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">SIP Needed to Close Gap</p>
-                    <p className="text-3xl font-bold text-pankh-gold">{formatINR(result.monthlyGap)}</p>
-                    <p className="text-xs text-gray-600 mt-1">@ 12% p.a. over {result.yearsToRetire} years</p>
+                    <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#90a4ae' }}>SIP Needed to Close Gap</p>
+                    <p className="text-3xl font-bold" style={{ color: '#d4a843' }}>{formatINR(result.monthlyGap)}</p>
+                    <p className="text-xs mt-1" style={{ color: '#b0bec5' }}>@ 12% p.a. over {result.yearsToRetire} years</p>
                   </div>
                   <div>
-                    {{
-                      comfortable: <span className="bg-green-500/10 text-green-400 border border-green-500/30 text-xs font-semibold px-3 py-1.5 rounded-full">✓ Comfortable</span>,
-                      stretch:     <span className="bg-pankh-gold/10 text-pankh-gold border border-pankh-gold/30 text-xs font-semibold px-3 py-1.5 rounded-full">~ Achievable</span>,
-                      tight:       <span className="bg-red-500/10 text-red-400 border border-red-500/30 text-xs font-semibold px-3 py-1.5 rounded-full">⚠ Tight</span>,
-                      deficit:     <span className="bg-red-500/10 text-red-400 border border-red-500/30 text-xs font-semibold px-3 py-1.5 rounded-full">✗ Deficit</span>,
-                    }[result.sipAffordability]}
+                    {(() => { const b = affordBadge[result.sipAffordability]; return (
+                      <span style={{ ...b, background: b.bg, padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 700 }}>{b.text}</span>
+                    ); })()}
                   </div>
                 </div>
               )}
@@ -696,83 +672,96 @@ export default function RetirementCalculator() {
             {result.gap > 0 ? (
               <Card>
                 <div className="flex justify-between items-center mb-3">
-                  <p className="text-gray-400 text-sm">Corpus Gap</p>
-                  <p className="text-2xl font-bold text-red-400">{formatINR(result.gap)}</p>
+                  <p className="text-sm font-semibold" style={{ color: '#cfd8dc' }}>Corpus Gap</p>
+                  <p className="text-2xl font-bold" style={{ color: '#fca5a5' }}>{formatINR(result.gap)}</p>
                 </div>
-                <div className="h-2.5 bg-white/10 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-pankh-gold to-green-400"
-                    style={{ width: `${Math.min(100, (result.totalCurrentProjected / result.totalTarget) * 100)}%` }}
-                  />
+                <div className="h-3 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                  <div className="h-full rounded-full" style={{
+                    width: `${Math.min(100, (result.totalCurrentProjected / result.totalTarget) * 100)}%`,
+                    background: 'linear-gradient(90deg, #d4a843, #4ade80)',
+                  }} />
                 </div>
                 <div className="flex justify-between mt-2">
-                  <span className="text-xs text-gray-600">{Math.min(100, ((result.totalCurrentProjected / result.totalTarget) * 100)).toFixed(1)}% funded</span>
-                  <span className="text-xs text-gray-600">Target: {formatINR(result.totalTarget)}</span>
+                  <span className="text-xs font-semibold" style={{ color: '#b0bec5' }}>{Math.min(100, ((result.totalCurrentProjected / result.totalTarget) * 100)).toFixed(1)}% funded</span>
+                  <span className="text-xs font-semibold" style={{ color: '#b0bec5' }}>Target: {formatINR(result.totalTarget)}</span>
                 </div>
               </Card>
             ) : (
-              <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-6">
-                <p className="text-xl font-bold text-green-400 mb-2">✅ You're on track!</p>
-                <p className="text-sm text-green-300/70">Projected corpus exceeds the target. Shift from equity to debt gradually as retirement nears.</p>
+              <div className="rounded-2xl p-6" style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)' }}>
+                <p className="text-xl font-bold mb-2" style={{ color: '#86efac' }}>✅ You're on track!</p>
+                <p className="text-sm" style={{ color: '#bbf7d0' }}>Projected corpus exceeds the target. Shift from equity to debt gradually as retirement nears to protect what you have built.</p>
               </div>
             )}
 
             {/* Investment growth */}
             {result.investBreakdown.some(i => Number(i.value) > 0) && (
               <Card>
-                <h3 className="text-lg font-bold text-pankh-gold mb-4">Projected Growth of Investments</h3>
-                {result.investBreakdown.filter(i => Number(i.value) > 0).map((inv, i) => (
-                  <div key={i} className="flex justify-between items-center py-3 border-b border-white/5">
+                <h3 className="text-lg font-bold mb-4" style={{ color: '#d4a843' }}>Projected Growth of Investments</h3>
+                {result.investBreakdown.filter(i => Number(i.value) > 0).map((inv, i, arr) => (
+                  <div key={i} className="flex justify-between items-center py-4" style={{ borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.08)' : 'none' }}>
                     <div>
-                      <p className="text-sm font-semibold text-white">{inv.instrument}</p>
-                      <p className="text-xs text-gray-600 mt-0.5">
+                      <p className="text-sm font-bold" style={{ color: '#ffffff' }}>{inv.instrument}</p>
+                      <p className="text-xs mt-1" style={{ color: '#90a4ae' }}>
                         {inv.isCurrent
-                          ? `Current value → ${(inv.r * 100).toFixed(1)}% p.a. × ${result.yearsToRetire}y`
-                          : `Invested since ${inv.year} → ${(inv.r * 100).toFixed(1)}% p.a. × ${inv.yearsToGrow}y`}
+                          ? `Current value → ${(inv.r * 100).toFixed(1)}% p.a. × ${result.yearsToRetire} yrs`
+                          : `Since ${inv.year} → ${(inv.r * 100).toFixed(1)}% p.a. × ${inv.yearsToGrow} yrs`}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-gray-600">{formatINR(Number(inv.value))} →</p>
-                      <p className="text-lg font-bold text-green-400">{formatINR(inv.fv)}</p>
+                      <p className="text-xs mb-1" style={{ color: '#90a4ae' }}>{formatINR(Number(inv.value))} grows to</p>
+                      <p className="text-lg font-bold" style={{ color: '#86efac' }}>{formatINR(inv.fv)}</p>
                     </div>
                   </div>
                 ))}
-                <div className="flex justify-between items-center pt-3">
-                  <p className="text-sm text-gray-400">Bank Balance (at 6.5% p.a.)</p>
-                  <p className="text-base font-semibold text-gray-300">{formatINR(result.bankFV)}</p>
+                {/* Bank balance row */}
+                <div className="flex justify-between items-center py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div>
+                    <p className="text-sm font-bold" style={{ color: '#ffffff' }}>Bank Balance</p>
+                    <p className="text-xs mt-1" style={{ color: '#90a4ae' }}>At 6.5% p.a. × {result.yearsToRetire} yrs</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs mb-1" style={{ color: '#90a4ae' }}>{formatINR(result.bankBalanceNum)} grows to</p>
+                    <p className="text-lg font-bold" style={{ color: '#86efac' }}>{formatINR(result.bankFV)}</p>
+                  </div>
+                </div>
+                {/* Total */}
+                <div className="flex justify-between items-center mt-2 rounded-xl px-5 py-4" style={{ background: 'rgba(212,168,67,0.1)', border: '1px solid rgba(212,168,67,0.25)' }}>
+                  <p className="text-sm font-bold" style={{ color: '#e8eaf0' }}>Total Projected at Retirement</p>
+                  <p className="text-xl font-bold" style={{ color: '#d4a843' }}>{formatINR(result.totalCurrentProjected)}</p>
                 </div>
               </Card>
             )}
 
             {/* Recommendations */}
             <Card>
-              <h3 className="text-lg font-bold text-pankh-gold mb-1">Personalised Recommendations</h3>
-              <p className="text-xs text-gray-500 mb-5">Based on your gap, surplus, age, and insurance status</p>
+              <h3 className="text-lg font-bold mb-1" style={{ color: '#d4a843' }}>Personalised Recommendations</h3>
+              <p className="text-xs mb-5" style={{ color: '#90a4ae' }}>Based on your gap, surplus, age, and insurance status</p>
               {result.recommendations.map((rec, i) => (
-                <div key={i} className={`flex gap-4 items-start py-4 ${i < result.recommendations.length - 1 ? 'border-b border-white/5' : ''}`}>
+                <div key={i} className="flex gap-4 items-start py-4" style={{ borderBottom: i < result.recommendations.length - 1 ? '1px solid rgba(255,255,255,0.08)' : 'none' }}>
                   <span className="text-2xl flex-shrink-0">{rec.icon}</span>
                   <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start gap-3 mb-1.5">
-                      <p className="text-base font-semibold text-white">{rec.title}</p>
-                      <span className={`flex-shrink-0 ${priorityBadge(rec.priority)}`}>{rec.priority}</span>
+                    <div className="flex justify-between items-start gap-3 mb-2">
+                      <p className="text-base font-bold" style={{ color: '#ffffff' }}>{rec.title}</p>
+                      <span style={priorityStyle(rec.priority)}>{rec.priority}</span>
                     </div>
-                    <p className="text-sm text-gray-400 leading-relaxed">{rec.detail}</p>
+                    <p className="text-sm leading-relaxed" style={{ color: '#cfd8dc' }}>{rec.detail}</p>
                   </div>
                 </div>
               ))}
             </Card>
 
             {/* CTA */}
-            <div className="bg-gradient-to-r from-pankh-navy to-pankh-navy-light border border-white/10 rounded-2xl p-6 text-center">
-              <p className="text-lg font-bold text-white mb-2">Ready to act on this plan?</p>
-              <p className="text-sm text-gray-400 mb-5">Our team can help you start your SIP, choose the right NPS fund, and get the right insurance — all in one place.</p>
+            <div className="rounded-2xl p-6 text-center" style={{ background: 'rgba(15,32,68,0.8)', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <p className="text-lg font-bold mb-2" style={{ color: '#ffffff' }}>Ready to act on this plan?</p>
+              <p className="text-sm mb-5" style={{ color: '#b0bec5' }}>Our team can help you start your SIP, choose the right NPS fund, and get the right insurance — all in one place.</p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <a href="/contact"
-                  className="bg-pankh-gold hover:bg-pankh-gold-light text-pankh-navy font-semibold px-8 py-3 rounded-full transition text-sm inline-block">
+                <a href="/contact" className="inline-block font-semibold px-8 py-3 rounded-full transition text-sm"
+                  style={{ background: '#d4a843', color: '#0f2044' }}>
                   Talk to an Advisor
                 </a>
                 <a href="https://wa.me/919746207344" target="_blank" rel="noopener noreferrer"
-                  className="bg-green-500 hover:bg-green-600 text-white font-semibold px-8 py-3 rounded-full transition text-sm inline-flex items-center justify-center gap-2">
+                  className="inline-flex items-center justify-center gap-2 font-semibold px-8 py-3 rounded-full transition text-sm"
+                  style={{ background: '#22c55e', color: '#ffffff' }}>
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
                   </svg>
@@ -782,7 +771,8 @@ export default function RetirementCalculator() {
             </div>
 
             <button onClick={() => { setStep(0); setResult(null); }}
-              className="w-full border border-white/20 hover:border-white/40 text-gray-400 hover:text-white py-3 rounded-full text-sm font-semibold transition-all">
+              className="w-full py-3 rounded-full text-sm font-semibold transition-all"
+              style={{ border: '1px solid rgba(255,255,255,0.2)', color: '#b0bec5', background: 'transparent' }}>
               ← Start Over
             </button>
           </div>
@@ -792,23 +782,26 @@ export default function RetirementCalculator() {
         {step < 4 && (
           <div className="flex justify-between mt-6">
             <button onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0}
-              className="border border-white/20 hover:border-white/40 text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed px-8 py-3 rounded-full text-sm font-semibold transition-all">
+              className="px-8 py-3 rounded-full text-sm font-semibold transition-all"
+              style={{ border: '1px solid rgba(255,255,255,0.2)', color: '#cfd8dc', background: 'transparent', opacity: step === 0 ? 0.3 : 1 }}>
               ← Back
             </button>
             {step < 3
               ? <button onClick={() => setStep(s => s + 1)} disabled={!canProceed()}
-                  className="bg-pankh-gold hover:bg-pankh-gold-light text-pankh-navy font-semibold px-8 py-3 rounded-full transition text-sm disabled:opacity-40 disabled:cursor-not-allowed">
+                  className="px-8 py-3 rounded-full text-sm font-semibold transition-all"
+                  style={{ background: canProceed() ? '#d4a843' : 'rgba(212,168,67,0.4)', color: '#0f2044', opacity: canProceed() ? 1 : 0.5, cursor: canProceed() ? 'pointer' : 'not-allowed' }}>
                   Continue →
                 </button>
               : <button onClick={calculate} disabled={!canProceed()}
-                  className="bg-pankh-gold hover:bg-pankh-gold-light text-pankh-navy font-semibold px-8 py-3 rounded-full transition text-sm disabled:opacity-40 disabled:cursor-not-allowed">
+                  className="px-8 py-3 rounded-full text-sm font-semibold transition-all"
+                  style={{ background: canProceed() ? '#d4a843' : 'rgba(212,168,67,0.4)', color: '#0f2044', opacity: canProceed() ? 1 : 0.5, cursor: canProceed() ? 'pointer' : 'not-allowed' }}>
                   See My Results →
                 </button>
             }
           </div>
         )}
 
-        <p className="text-center text-xs text-white/60 mt-10 tracking-widest uppercase">
+        <p className="text-center text-xs mt-10 uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.2)' }}>
           For informational purposes only · Not financial advice · Consult a SEBI-registered advisor
         </p>
       </div>
