@@ -28,11 +28,12 @@ export default function Home() {
               >
                 Start Your Journey
               </Link>
-              <button 
-                className="bg-white/10 hover:bg-white/20 text-white font-semibold px-8 py-4 rounded-full transition text-lg border-2 border-white/30"
-              >
-                Retirement Calculator (Coming Soon)
-              </button>
+              <Link 
+  href="/retirement-calculator"
+  className="bg-white/10 hover:bg-white/20 text-white font-semibold px-8 py-4 rounded-full transition text-lg border-2 border-white/30"
+>
+  Retirement Calculator
+</Link>
             </div>
           </div>
         </div>
