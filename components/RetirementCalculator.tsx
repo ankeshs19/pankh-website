@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-// ─── Constants ───────────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const INSTRUMENTS_CURRENT_VALUE = ['Mutual Fund', 'EPF / PF', 'NPS', 'ETF', 'Stocks', 'Gold (Physical/ETF)'];
 const INSTRUMENTS_INVESTED      = ['PPF', 'Land / Property', 'FD / RD', 'ELSS', 'Insurance (Investment)', 'Other'];
@@ -48,7 +48,7 @@ interface Recommendation {
   priority: 'Critical' | 'High' | 'Medium' | 'On Track';
 }
 
-interface Result {
+interface CalcResult {
   corpusNeeded: number;
   emergencyFund: number;
   totalTarget: number;
@@ -68,34 +68,116 @@ interface Result {
   monthlyIncome: number;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// ─── Helper UI components — OUTSIDE main component to prevent remount on render ──
+
+const Card = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
+  <div className={`bg-white/5 border border-white/10 rounded-2xl p-6 ${className}`}>
+    {children}
+  </div>
+);
+
+const SectionTitle = ({ children }: { children: React.ReactNode }) => (
+  <h2 className="text-2xl font-bold text-pankh-gold mb-1">{children}</h2>
+);
+
+const SectionSub = ({ children }: { children: React.ReactNode }) => (
+  <p className="text-sm text-gray-400 mb-6">{children}</p>
+);
+
+const Label = ({ children }: { children: React.ReactNode }) => (
+  <label className="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">
+    {children}
+  </label>
+);
+
+// ✅ Defined OUTSIDE — stable reference across renders, no remount, no cursor jump
+const Input = ({
+  value, onChange, placeholder, prefix,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  prefix?: string;
+}) => (
+  <div className="relative">
+    {prefix && (
+      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-pankh-gold font-semibold pointer-events-none">
+        {prefix}
+      </span>
+    )}
+    <input
+      type="text"
+      inputMode="numeric"
+      value={value}
+      placeholder={placeholder}
+      onChange={e => onChange(e.target.value)}
+      className={`w-full bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-600 text-sm outline-none focus:border-pankh-gold transition-colors py-3 ${prefix ? 'pl-8 pr-4' : 'px-4'}`}
+    />
+  </div>
+);
+
+const InsBtn = ({
+  active, variant, onClick, children,
+}: {
+  active: boolean;
+  variant: 'yes' | 'no';
+  onClick: () => void;
+  children: React.ReactNode;
+}) => (
+  <button
+    onClick={onClick}
+    className={`px-5 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all ${
+      variant === 'yes'
+        ? active
+          ? 'bg-green-500 border-green-500 text-white'
+          : 'border-green-500/40 text-green-400 hover:border-green-500'
+        : active
+          ? 'bg-red-500 border-red-500 text-white'
+          : 'border-red-500/40 text-red-400 hover:border-red-500'
+    }`}
+  >
+    {children}
+  </button>
+);
+
+const priorityBadge = (p: string) => {
+  const map: Record<string, string> = {
+    Critical:   'bg-red-500/10 text-red-400 border border-red-500/30',
+    High:       'bg-pankh-gold/10 text-pankh-gold border border-pankh-gold/30',
+    Medium:     'bg-blue-500/10 text-blue-300 border border-blue-500/30',
+    'On Track': 'bg-green-500/10 text-green-400 border border-green-500/30',
+  };
+  return `text-xs font-semibold px-3 py-1 rounded-full ${map[p] || ''}`;
+};
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function RetirementCalculator() {
 
   const [step, setStep] = useState(0);
 
-  // Step 0 — Profile
-  const [age, setAge]                   = useState('');
-  const [retireAge, setRetireAge]       = useState('');
-  const [lifeExp, setLifeExp]           = useState('80');
+  // Step 0
+  const [age, setAge]                     = useState('');
+  const [retireAge, setRetireAge]         = useState('');
+  const [lifeExp, setLifeExp]             = useState('80');
   const [monthlyIncome, setMonthlyIncome] = useState('');
 
-  // Step 1 — Expenses
-  const [grocery, setGrocery]           = useState('');
-  const [fuel, setFuel]                 = useState('');
-  const [rent, setRent]                 = useState('');
-  const [electricity, setElectricity]   = useState('');
-  const [kidsEdu, setKidsEdu]           = useState('');
-  const [medical, setMedical]           = useState('');
-  const [other, setOther]               = useState('');
+  // Step 1
+  const [grocery, setGrocery]         = useState('');
+  const [fuel, setFuel]               = useState('');
+  const [rent, setRent]               = useState('');
+  const [electricity, setElectricity] = useState('');
+  const [kidsEdu, setKidsEdu]         = useState('');
+  const [medical, setMedical]         = useState('');
+  const [other, setOther]             = useState('');
 
-  // Step 2 — Savings
-  const [bankBalance, setBankBalance]   = useState('');
-  const [investments, setInvestments]   = useState<Investment[]>([
+  // Step 2
+  const [bankBalance, setBankBalance] = useState('');
+  const [investments, setInvestments] = useState<Investment[]>([
     { instrument: 'Mutual Fund', value: '', year: String(CURRENT_YEAR) },
   ]);
 
-  // Step 3 — Insurance
+  // Step 3
   const [insuredSelf, setInsuredSelf]         = useState<boolean | null>(null);
   const [hasSpouse, setHasSpouse]             = useState<boolean | null>(null);
   const [insuredSpouse, setInsuredSpouse]     = useState<boolean | null>(null);
@@ -104,9 +186,9 @@ export default function RetirementCalculator() {
   const [hasParents, setHasParents]           = useState<boolean | null>(null);
   const [insuredParents, setInsuredParents]   = useState<boolean | null>(null);
 
-  const [result, setResult] = useState<Result | null>(null);
+  const [result, setResult] = useState<CalcResult | null>(null);
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
+  // ── Helpers ───────────────────────────────────────────────────────────────
 
   const totalExpense = () =>
     [grocery, fuel, rent, electricity, kidsEdu, medical, other]
@@ -124,11 +206,12 @@ export default function RetirementCalculator() {
     setInvestments(p => p.map((inv, idx) => idx === i ? { ...inv, [field]: val } : inv));
 
   const canProceed = () => {
-    if (step === 0) return age && monthlyIncome && retireAge && Number(retireAge) >= 35 && Number(retireAge) > Number(age);
+    if (step === 0) return age && monthlyIncome && retireAge
+      && Number(retireAge) >= 35 && Number(retireAge) > Number(age);
     if (step === 1) return totalExpense() > 0;
     if (step === 2) return bankBalance !== '';
     if (step === 3) return insuredSelf !== null
-      && (hasSpouse  != null ? (hasSpouse  ? insuredSpouse   !== null : true) : false)
+      && (hasSpouse   != null ? (hasSpouse   ? insuredSpouse   !== null : true) : false)
       && (hasChildren != null ? (hasChildren ? insuredChildren !== null : true) : false)
       && (hasParents  != null ? (hasParents  ? insuredParents  !== null : true) : false);
     return true;
@@ -137,14 +220,14 @@ export default function RetirementCalculator() {
   // ── Calculate ─────────────────────────────────────────────────────────────
 
   const calculate = () => {
-    const currentAge     = Number(age);
-    const retAge         = Number(retireAge);
-    const lifeExpNum     = Number(lifeExp);
-    const yearsToRetire  = retAge - currentAge;
+    const currentAge      = Number(age);
+    const retAge          = Number(retireAge);
+    const lifeExpNum      = Number(lifeExp);
+    const yearsToRetire   = retAge - currentAge;
     const retirementYears = lifeExpNum - retAge;
-    const inflation      = 0.07;
-    const preReturn      = 0.12;
-    const postReturn     = 0.065;
+    const inflation       = 0.07;
+    const preReturn       = 0.12;
+    const postReturn      = 0.065;
 
     const monthlyExpenseNow         = totalExpense();
     const annualExpenseAtRetirement = monthlyExpenseNow * 12 * Math.pow(1 + inflation, yearsToRetire);
@@ -159,27 +242,27 @@ export default function RetirementCalculator() {
 
     let investmentFV = 0;
     const investBreakdown: InvestmentResult[] = investments.map(inv => {
-      const val  = Number(inv.value) || 0;
-      const r    = RETURNS[inv.instrument] || 0.09;
-      const isCur = isCurrentValue(inv.instrument);
+      const val          = Number(inv.value) || 0;
+      const r            = RETURNS[inv.instrument] || 0.09;
+      const isCur        = isCurrentValue(inv.instrument);
       const yearsAlready = Math.max(0, CURRENT_YEAR - Number(inv.year));
       const yearsToGrow  = isCur ? yearsToRetire : yearsToRetire + yearsAlready;
-      const fv   = val * Math.pow(1 + r, Math.max(yearsToGrow, 0));
+      const fv           = val * Math.pow(1 + r, Math.max(yearsToGrow, 0));
       investmentFV += fv;
       return { ...inv, fv, r, isCurrent: isCur, yearsToGrow };
     });
 
     const totalCurrentProjected = bankFV + investmentFV;
-    const gap          = totalTarget - totalCurrentProjected;
-    const monthlyGap   = gap > 0
+    const gap        = totalTarget - totalCurrentProjected;
+    const monthlyGap = gap > 0
       ? gap / ((Math.pow(1 + preReturn / 12, yearsToRetire * 12) - 1) / (preReturn / 12))
       : 0;
 
     const surplusVal = surplus();
-    const sipAffordability: Result['sipAffordability'] =
-      surplusVal <= 0              ? 'deficit'    :
-      monthlyGap <= surplusVal     ? 'comfortable' :
-      monthlyGap <= surplusVal * 1.3 ? 'stretch'  : 'tight';
+    const sipAffordability: CalcResult['sipAffordability'] =
+      surplusVal <= 0                ? 'deficit'     :
+      monthlyGap <= surplusVal       ? 'comfortable' :
+      monthlyGap <= surplusVal * 1.3 ? 'stretch'     : 'tight';
 
     const recommendations = buildRecs(gap, monthlyGap, surplusVal, sipAffordability, currentAge, yearsToRetire);
 
@@ -188,116 +271,57 @@ export default function RetirementCalculator() {
       bankFV, investmentFV, totalCurrentProjected,
       gap, monthlyGap, yearsToRetire, retirementYears,
       annualExpenseAtRetirement, investBreakdown,
-      monthlyExpenseNow, surplus: surplusVal, sipAffordability,
-      recommendations, monthlyIncome: Number(monthlyIncome),
+      monthlyExpenseNow, surplus: surplusVal,
+      sipAffordability, recommendations,
+      monthlyIncome: Number(monthlyIncome),
     });
     setStep(4);
   };
 
   const buildRecs = (
     gap: number, monthlyGap: number, surplusVal: number,
-    aff: string, age: number, yearsToRetire: number
+    aff: string, age: number, yearsToRetire: number,
   ): Recommendation[] => {
     const recs: Recommendation[] = [];
     const isNear = age >= 50;
 
     if (aff === 'deficit')
-      recs.push({ icon: '🔴', title: 'Spending Exceeds Income', detail: `Your monthly expenses exceed income by ${formatINR(Math.abs(surplusVal))}. Close this gap before investing — debt will erode any savings you build.`, priority: 'Critical' });
+      recs.push({ icon: '🔴', title: 'Spending Exceeds Income', detail: `Expenses exceed income by ${formatINR(Math.abs(surplusVal))}. Close this gap before investing — debt erodes any savings you build.`, priority: 'Critical' });
     else if (aff === 'tight')
       recs.push({ icon: '⚠️', title: 'SIP Requires Lifestyle Adjustments', detail: `Surplus is ${formatINR(surplusVal)} but SIP needed is ${formatINR(monthlyGap)}. Reduce discretionary spend or add income streams.`, priority: 'High' });
     else if (aff === 'stretch')
-      recs.push({ icon: '💡', title: 'Achievable with Discipline', detail: `Your surplus (${formatINR(surplusVal)}) nearly covers the required SIP (${formatINR(monthlyGap)}). A step-up SIP or annual bonus can bridge the gap comfortably.`, priority: 'Medium' });
+      recs.push({ icon: '💡', title: 'Achievable with Discipline', detail: `Your surplus (${formatINR(surplusVal)}) nearly covers the required SIP (${formatINR(monthlyGap)}). A step-up SIP or annual bonus can bridge the gap.`, priority: 'Medium' });
     else if (surplusVal > 0 && gap > 0)
-      recs.push({ icon: '✅', title: 'Surplus Covers the SIP', detail: `Your monthly surplus of ${formatINR(surplusVal)} comfortably covers the required SIP of ${formatINR(monthlyGap)}. Start investing it immediately.`, priority: 'On Track' });
+      recs.push({ icon: '✅', title: 'Surplus Covers the SIP', detail: `Monthly surplus of ${formatINR(surplusVal)} comfortably covers the required SIP of ${formatINR(monthlyGap)}. Start investing it immediately.`, priority: 'On Track' });
 
     if (gap > 0) {
       if (!isNear)
         recs.push({ icon: '📈', title: 'Equity Mutual Funds (SIP)', detail: `Start a SIP immediately — compounded over ${yearsToRetire} years at 12–14% CAGR via large-cap or flexi-cap funds, small monthly amounts grow significantly.`, priority: 'High' });
       if (age < 60)
-        recs.push({ icon: '🏛️', title: 'NPS — National Pension System', detail: 'Extra ₹50,000 deduction under 80CCD(1B). Historically 9–12% returns. Lock-in to retirement enforces discipline and reduces temptation to withdraw early.', priority: 'High' });
+        recs.push({ icon: '🏛️', title: 'NPS — National Pension System', detail: 'Extra ₹50,000 deduction under 80CCD(1B). Historically 9–12% returns. Lock-in enforces discipline.', priority: 'High' });
       if (!isNear) {
-        recs.push({ icon: '🔒', title: 'PPF — Public Provident Fund', detail: '7.1% tax-free, EEE status, government-backed. Max ₹1.5L/year. The lock-in prevents early withdrawal — a feature, not a bug.', priority: 'Medium' });
+        recs.push({ icon: '🔒', title: 'PPF — Public Provident Fund', detail: '7.1% tax-free, EEE status. Max ₹1.5L/year. Lock-in prevents early withdrawal — a feature, not a bug.', priority: 'Medium' });
         recs.push({ icon: '⚡', title: 'ELSS — Tax-Saving Mutual Fund', detail: 'Shortest 80C lock-in at 3 years. Market-linked 12–15% returns. Doubles as tax saving under Section 80C.', priority: 'Medium' });
       }
       if (isNear) {
-        recs.push({ icon: '🏦', title: 'Senior Citizens Savings Scheme', detail: 'Available post-60. Quarterly government-backed interest at ~8.2%. Safe and liquid for post-retirement cash flow.', priority: 'High' });
-        recs.push({ icon: '📊', title: 'Debt Mutual Funds + SWP', detail: 'Systematic Withdrawal Plan is more tax-efficient than FD interest for post-retirement income. Shift equity corpus here gradually.', priority: 'High' });
+        recs.push({ icon: '🏦', title: 'Senior Citizens Savings Scheme', detail: 'Available post-60. ~8.2% quarterly government-backed interest. Safe and liquid for post-retirement cash flow.', priority: 'High' });
+        recs.push({ icon: '📊', title: 'Debt Mutual Funds + SWP', detail: 'Systematic Withdrawal Plan is more tax-efficient than FD interest for post-retirement income.', priority: 'High' });
       }
     } else {
-      recs.push({ icon: '🎯', title: 'On Track — Focus on Rebalancing', detail: 'Projected corpus exceeds target. As retirement nears, progressively shift from equity to debt to protect the corpus from market volatility.', priority: 'On Track' });
+      recs.push({ icon: '🎯', title: 'On Track — Focus on Rebalancing', detail: 'Projected corpus exceeds target. Shift from equity to debt gradually as retirement nears.', priority: 'On Track' });
     }
 
     if (insuredSelf === false)
-      recs.push({ icon: '🚨', title: 'No Health Insurance for You', detail: 'Medical inflation is 8–10% p.a. A single hospitalisation can wipe years of savings. Get a ₹10–25L individual policy immediately.', priority: 'Critical' });
+      recs.push({ icon: '🚨', title: 'No Health Insurance for You', detail: 'Medical inflation is 8–10% p.a. A single hospitalisation can wipe years of savings. Get a ₹10–25L policy immediately.', priority: 'Critical' });
     if (hasSpouse && insuredSpouse === false)
-      recs.push({ icon: '🚨', title: 'Spouse Not Covered', detail: "A critical illness for your spouse directly hits your retirement corpus. Add them to a family floater or get a separate policy.", priority: 'Critical' });
+      recs.push({ icon: '🚨', title: 'Spouse Not Covered', detail: 'A critical illness for your spouse directly hits your retirement corpus. Add to a family floater or get a separate policy.', priority: 'Critical' });
     if (hasChildren && insuredChildren === false)
-      recs.push({ icon: '⚠️', title: 'Children Not Insured', detail: 'Paediatric emergencies are expensive and unpredictable. Adding children to a family floater is typically low additional cost at young ages.', priority: 'High' });
+      recs.push({ icon: '⚠️', title: 'Children Not Insured', detail: 'Adding children to a family floater is low cost at young ages — paediatric emergencies are expensive and unpredictable.', priority: 'High' });
     if (hasParents && insuredParents === false)
-      recs.push({ icon: '🚨', title: 'Parents Not Insured', detail: 'Senior citizen hospitalisation can cost ₹5–30L per incident. Without a dedicated parent plan, your corpus absorbs these shocks directly.', priority: 'Critical' });
+      recs.push({ icon: '🚨', title: 'Parents Not Insured', detail: 'Senior citizen hospitalisation can cost ₹5–30L per incident. Without a dedicated parent plan, your corpus absorbs these shocks.', priority: 'Critical' });
 
     return recs;
   };
-
-  // ── Shared UI pieces ─────────────────────────────────────────────────────
-
-  const priorityBadge = (p: string) => {
-    const map: Record<string, string> = {
-      Critical: 'bg-red-500/10 text-red-400 border border-red-500/30',
-      High:     'bg-pankh-gold/10 text-pankh-gold border border-pankh-gold/30',
-      Medium:   'bg-blue-500/10 text-blue-300 border border-blue-500/30',
-      'On Track': 'bg-green-500/10 text-green-400 border border-green-500/30',
-    };
-    return `text-xs font-semibold px-3 py-1 rounded-full ${map[p] || ''}`;
-  };
-
-  const Card = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
-    <div className={`bg-white/5 border border-white/10 rounded-2xl p-6 ${className}`}>
-      {children}
-    </div>
-  );
-
-  const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-    <h2 className="text-2xl font-bold text-pankh-gold mb-1">{children}</h2>
-  );
-
-  const SectionSub = ({ children }: { children: React.ReactNode }) => (
-    <p className="text-sm text-gray-400 mb-6">{children}</p>
-  );
-
-  const Label = ({ children }: { children: React.ReactNode }) => (
-    <label className="block text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">
-      {children}
-    </label>
-  );
-
-  const Input = ({ value, onChange, placeholder, type = 'number', prefix }: {
-    value: string; onChange: (v: string) => void;
-    placeholder?: string; type?: string; prefix?: string;
-  }) => (
-    <div className="relative">
-      {prefix && <span className="absolute left-4 top-1/2 -translate-y-1/2 text-pankh-gold font-semibold">{prefix}</span>}
-      <input
-        type={type} value={value} placeholder={placeholder}
-        onChange={e => onChange(e.target.value)}
-        className={`w-full bg-white/5 border border-white/15 rounded-xl text-white placeholder-gray-600 text-sm outline-none focus:border-pankh-gold transition-colors py-3 ${prefix ? 'pl-8 pr-4' : 'px-4'}`}
-      />
-    </div>
-  );
-
-  const InsBtn = ({ active, variant, onClick, children }: {
-    active: boolean; variant: 'yes' | 'no'; onClick: () => void; children: React.ReactNode;
-  }) => (
-    <button onClick={onClick}
-      className={`px-5 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all ${
-        variant === 'yes'
-          ? active ? 'bg-green-500 border-green-500 text-white' : 'border-green-500/40 text-green-400 hover:border-green-500'
-          : active ? 'bg-red-500 border-red-500 text-white' : 'border-red-500/40 text-red-400 hover:border-red-500'
-      }`}
-    >
-      {children}
-    </button>
-  );
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -305,7 +329,7 @@ export default function RetirementCalculator() {
     <div className="text-white">
       <div className="container mx-auto px-4 py-16 max-w-2xl">
 
-        {/* Header */}
+        {/* Page header */}
         <div className="text-center mb-12">
           <p className="text-xs font-semibold tracking-widest text-pankh-gold uppercase mb-3">Free Tool</p>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
@@ -314,7 +338,7 @@ export default function RetirementCalculator() {
           <p className="text-gray-300 text-lg">A comprehensive retirement planner for Indian investors</p>
         </div>
 
-        {/* Step Bar */}
+        {/* Step bar */}
         <div className="flex items-center justify-center gap-2 mb-10 flex-wrap">
           {STEPS.map((s, i) => (
             <div key={i} className="flex items-center gap-2">
@@ -346,7 +370,7 @@ export default function RetirementCalculator() {
                 <Input value={age} onChange={setAge} placeholder="e.g. 30" />
               </div>
               <div>
-                <Label>Retirement Age <span className="text-white/30 normal-case">(min 35)</span></Label>
+                <Label>Retirement Age (min 35)</Label>
                 <Input value={retireAge} onChange={setRetireAge} placeholder="e.g. 50" />
                 {retireAge && Number(retireAge) < 35 && (
                   <p className="text-red-400 text-xs mt-1">Minimum retirement age is 35</p>
@@ -398,20 +422,34 @@ export default function RetirementCalculator() {
             <SectionSub>Current monthly spending — inflated at 7% p.a. to your retirement date</SectionSub>
 
             <div className="grid grid-cols-2 gap-4">
-              {([
-                ['🛒 Groceries', grocery, setGrocery],
-                ['⛽ Fuel / Transport', fuel, setFuel],
-                ['🏠 Rent / Home Loan', rent, setRent],
-                ['💡 Electricity & Utilities', electricity, setElectricity],
-                ['🎓 Kids Education', kidsEdu, setKidsEdu],
-                ['🏥 Medical / OPD', medical, setMedical],
-                ['📦 Other Expenses', other, setOther],
-              ] as [string, string, (v: string) => void][]).map(([label, val, setter]) => (
-                <div key={label}>
-                  <Label>{label}</Label>
-                  <Input value={val} onChange={setter} placeholder="0" prefix="₹" />
-                </div>
-              ))}
+              <div>
+                <Label>🛒 Groceries</Label>
+                <Input value={grocery} onChange={setGrocery} placeholder="0" prefix="₹" />
+              </div>
+              <div>
+                <Label>⛽ Fuel / Transport</Label>
+                <Input value={fuel} onChange={setFuel} placeholder="0" prefix="₹" />
+              </div>
+              <div>
+                <Label>🏠 Rent / Home Loan</Label>
+                <Input value={rent} onChange={setRent} placeholder="0" prefix="₹" />
+              </div>
+              <div>
+                <Label>💡 Electricity & Utilities</Label>
+                <Input value={electricity} onChange={setElectricity} placeholder="0" prefix="₹" />
+              </div>
+              <div>
+                <Label>🎓 Kids Education</Label>
+                <Input value={kidsEdu} onChange={setKidsEdu} placeholder="0" prefix="₹" />
+              </div>
+              <div>
+                <Label>🏥 Medical / OPD</Label>
+                <Input value={medical} onChange={setMedical} placeholder="0" prefix="₹" />
+              </div>
+              <div>
+                <Label>📦 Other Expenses</Label>
+                <Input value={other} onChange={setOther} placeholder="0" prefix="₹" />
+              </div>
             </div>
 
             {monthlyIncome && totalExpense() > 0 && (
@@ -596,7 +634,7 @@ export default function RetirementCalculator() {
         {step === 4 && result && (
           <div className="space-y-4">
 
-            {/* Hero corpus card */}
+            {/* Hero corpus */}
             <div className="bg-gradient-to-br from-pankh-gold/20 to-pankh-gold/5 border border-pankh-gold/30 rounded-2xl p-6">
               <div className="text-center pb-6 border-b border-white/10">
                 <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-3">Corpus Required at Retirement</p>
@@ -608,9 +646,9 @@ export default function RetirementCalculator() {
               </div>
               <div className="grid grid-cols-3 gap-3 pt-5">
                 {([
-                  ['Retirement\nCorpus',        result.corpusNeeded,           'text-white'],
-                  ['Emergency\nBuffer (6 mo.)', result.emergencyFund,          'text-yellow-300'],
-                  ['Your Current\nProjection',  result.totalCurrentProjected,  result.totalCurrentProjected >= result.totalTarget ? 'text-green-400' : 'text-red-400'],
+                  ['Retirement\nCorpus',        result.corpusNeeded,          'text-white'],
+                  ['Emergency\nBuffer (6 mo.)', result.emergencyFund,         'text-yellow-300'],
+                  ['Your Current\nProjection',  result.totalCurrentProjected, result.totalCurrentProjected >= result.totalTarget ? 'text-green-400' : 'text-red-400'],
                 ] as [string, number, string][]).map(([label, val, color]) => (
                   <div key={label} className="bg-white/5 rounded-xl p-4 text-center">
                     <p className="text-[9px] text-gray-500 uppercase tracking-wider mb-2 whitespace-pre-line">{label}</p>
@@ -625,9 +663,9 @@ export default function RetirementCalculator() {
               <h3 className="text-lg font-bold text-pankh-gold mb-4">Monthly Cash Flow</h3>
               <div className="grid grid-cols-3 gap-3 mb-4">
                 {([
-                  ['Income',   result.monthlyIncome,      'text-white'],
-                  ['Expenses', result.monthlyExpenseNow,  'text-red-400'],
-                  ['Surplus',  result.surplus,            result.surplus >= 0 ? 'text-green-400' : 'text-red-400'],
+                  ['Income',   result.monthlyIncome,     'text-white'],
+                  ['Expenses', result.monthlyExpenseNow, 'text-red-400'],
+                  ['Surplus',  result.surplus,           result.surplus >= 0 ? 'text-green-400' : 'text-red-400'],
                 ] as [string, number, string][]).map(([lbl, val, color]) => (
                   <div key={lbl} className="bg-white/5 rounded-xl p-4 text-center">
                     <p className="text-[9px] text-gray-500 uppercase tracking-wider mb-2">{lbl}</p>
@@ -635,7 +673,6 @@ export default function RetirementCalculator() {
                   </div>
                 ))}
               </div>
-
               {result.gap > 0 && (
                 <div className="flex justify-between items-center bg-white/5 rounded-xl px-5 py-4 border border-white/10">
                   <div>
@@ -676,7 +713,7 @@ export default function RetirementCalculator() {
             ) : (
               <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-6">
                 <p className="text-xl font-bold text-green-400 mb-2">✅ You're on track!</p>
-                <p className="text-sm text-green-300/70">Your projected corpus exceeds the target. Shift from equity to debt gradually as retirement nears to protect what you've built.</p>
+                <p className="text-sm text-green-300/70">Projected corpus exceeds the target. Shift from equity to debt gradually as retirement nears.</p>
               </div>
             )}
 
@@ -725,7 +762,7 @@ export default function RetirementCalculator() {
               ))}
             </Card>
 
-            {/* CTA — matches site's style */}
+            {/* CTA */}
             <div className="bg-gradient-to-r from-pankh-navy to-pankh-navy-light border border-white/10 rounded-2xl p-6 text-center">
               <p className="text-lg font-bold text-white mb-2">Ready to act on this plan?</p>
               <p className="text-sm text-gray-400 mb-5">Our team can help you start your SIP, choose the right NPS fund, and get the right insurance — all in one place.</p>
@@ -774,7 +811,6 @@ export default function RetirementCalculator() {
         <p className="text-center text-xs text-gray-700 mt-10 tracking-widest uppercase">
           For informational purposes only · Not financial advice · Consult a SEBI-registered advisor
         </p>
-
       </div>
     </div>
   );
