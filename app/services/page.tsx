@@ -292,7 +292,7 @@ export default function Services() {
               Talk to an Advisor
             </Link>
             <a 
-              href="https://wa.me/YOUR_WHATSAPP_NUMBER" 
+              href="https://wa.me/919746207344" 
               target="_blank" 
               rel="noopener noreferrer"
               className="bg-green-500 hover:bg-green-600 text-white font-semibold px-8 py-4 rounded-full transition text-lg inline-flex items-center justify-center space-x-2"
