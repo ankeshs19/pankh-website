@@ -808,7 +808,7 @@ export default function RetirementCalculator() {
           </div>
         )}
 
-        <p className="text-center text-xs text-gray-700 mt-10 tracking-widest uppercase">
+        <p className="text-center text-xs text-gray-400 mt-10 tracking-widest uppercase">
           For informational purposes only · Not financial advice · Consult a SEBI-registered advisor
         </p>
       </div>
