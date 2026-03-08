@@ -93,11 +93,12 @@ export default function Services() {
                   </p>
                 </div>
 
-                <button 
-                  className="w-full bg-pankh-navy hover:bg-pankh-navy-light text-white font-semibold py-3 px-6 rounded-full transition"
+                <Link
+                  href="/retirement-calculator"
+                  className="block w-full bg-pankh-navy hover:bg-pankh-navy-light text-white font-semibold py-3 px-6 rounded-full transition text-center"
                 >
-                  Retirement Calculator 
-                </button>
+                  Try Retirement Calculator →
+                </Link>
               </div>
 
               {/* Future Planning */}
