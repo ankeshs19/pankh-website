@@ -89,7 +89,7 @@ ${formData.message}
                 </h2>
                 <p className="text-gray-700 mb-8 leading-relaxed">
                   Whether you have questions about retirement planning, want to start your first SIP, 
-                  or just need some financial guidance — we're here to help. Fill out the form and 
+                  or just need some guidance — we're here to help. Fill out the form and 
                   we'll get back to you shortly.
                 </p>
 
