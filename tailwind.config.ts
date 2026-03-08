@@ -7,8 +7,20 @@ const config: Config = {
     './app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
+    screens: {
+      'xs': '375px',
+      'sm': '640px',
+      'md': '768px',
+      'lg': '1024px',
+      'xl': '1280px',
+      '2xl': '1536px',
+    },
     extend: {
       colors: {
+        'pankh-navy': '#1A3C6E',
+        'pankh-navy-light': '#2A5298',
+        'pankh-gold': '#D4A017',
+        'pankh-gold-light': '#E8B520',
         primary: {
           blue: '#0A3D62',
           gold: '#D4AF37',
@@ -16,10 +28,10 @@ const config: Config = {
         accent: {
           lightBlue: '#1E5A8E',
           darkGold: '#B8941E',
-        }
+        },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Poppins', 'Noto Sans', 'system-ui', 'sans-serif'],
       },
     },
   },
