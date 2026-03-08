@@ -96,7 +96,7 @@ export default function Services() {
                 <button 
                   className="w-full bg-pankh-navy hover:bg-pankh-navy-light text-white font-semibold py-3 px-6 rounded-full transition"
                 >
-                  Retirement Calculator (Coming Soon)
+                  Retirement Calculator 
                 </button>
               </div>
 
