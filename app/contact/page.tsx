@@ -152,7 +152,7 @@ ${formData.message}
               </div>
 
               {/* Contact Form */}
-              <div className="bg-gray-50 p-8 rounded-2xl">
+              <div className="bg-gray-50 p-5 sm:p-8 rounded-2xl">
                 <h3 className="text-2xl font-bold text-pankh-navy mb-6">Send Us a Message</h3>
                 
                 {submitted && (
