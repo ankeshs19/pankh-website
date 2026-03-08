@@ -362,18 +362,18 @@ export default function RetirementCalculator() {
       <div className="container mx-auto px-4 py-16 max-w-2xl">
 
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-10 md:mb-12">
           <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: '#d4a843' }}>Free Tool</p>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: '#ffffff' }}>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4" style={{ color: '#ffffff' }}>
             Retirement <span style={{ color: '#d4a843' }}>Calculator</span>
           </h1>
-          <p className="text-lg" style={{ color: '#b0bec5' }}>A comprehensive retirement planner for Indian investors</p>
+          <p className="text-base md:text-lg px-2" style={{ color: '#b0bec5' }}>A comprehensive retirement planner for Indian investors</p>
         </div>
 
         {/* Step bar */}
-        <div className="flex items-center justify-center gap-2 mb-10 flex-wrap">
+        <div className="flex items-center justify-center gap-1 sm:gap-2 mb-8 md:mb-10 overflow-x-auto pb-1">
           {STEPS.map((s, i) => (
-            <div key={i} className="flex items-center gap-2">
+            <div key={i} className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               <div className="flex flex-col items-center gap-1.5">
                 <div style={{
                   borderRadius: '50%', transition: 'all 0.3s',
@@ -381,11 +381,11 @@ export default function RetirementCalculator() {
                   background: i === step ? '#d4a843' : i < step ? '#4ade80' : 'rgba(255,255,255,0.2)',
                 }} />
                 <span style={{
-                  fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap',
+                  fontSize: 8, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', whiteSpace: 'nowrap',
                   color: i === step ? '#d4a843' : i < step ? 'rgba(74,222,128,0.7)' : 'rgba(255,255,255,0.25)',
                 }}>{s}</span>
               </div>
-              {i < STEPS.length - 1 && <div style={{ width: 28, height: 1, background: i < step ? 'rgba(74,222,128,0.3)' : 'rgba(255,255,255,0.1)', marginBottom: 14 }} />}
+              {i < STEPS.length - 1 && <div style={{ width: 16, height: 1, background: i < step ? 'rgba(74,222,128,0.3)' : 'rgba(255,255,255,0.1)', marginBottom: 14, flexShrink: 0 }} />}
             </div>
           ))}
         </div>
@@ -505,22 +505,24 @@ export default function RetirementCalculator() {
                 const isCur = isCurrentValue(inv.instrument);
                 return (
                   <div key={i} className="rounded-xl p-4 mb-3" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                    <div className={`grid gap-3 items-end mb-3 ${isCur ? 'grid-cols-[2fr_2fr_36px]' : 'grid-cols-[2fr_1.5fr_0.8fr_36px]'}`}>
-                      <div>
+                    {/* Mobile: stack vertically; Desktop: side by side */}
+                    <div className="flex flex-col sm:grid sm:gap-3 sm:items-end mb-3"
+                      style={{ gridTemplateColumns: isCur ? '2fr 2fr 36px' : '2fr 1.5fr 0.8fr 36px' }}>
+                      <div className="mb-3 sm:mb-0">
                         <Label>Instrument</Label>
                         <CustomSelect value={inv.instrument} onChange={v => updateInv(i, 'instrument', v)} />
                       </div>
-                      <div>
+                      <div className="mb-3 sm:mb-0">
                         <Label>{isCur ? 'Current Market Value' : 'Amount Invested (₹)'}</Label>
                         <Input value={inv.value} onChange={v => updateInv(i, 'value', v)} placeholder="0" prefix="₹" />
                       </div>
                       {!isCur && (
-                        <div>
+                        <div className="mb-3 sm:mb-0">
                           <Label>Since</Label>
                           <Input value={inv.year} onChange={v => updateInv(i, 'year', v)} placeholder={String(CURRENT_YEAR)} />
                         </div>
                       )}
-                      <div className={isCur ? '' : 'pt-6'}>
+                      <div className={`flex sm:block justify-end ${isCur ? '' : 'sm:pt-6'}`}>
                         <button onClick={() => removeInv(i)}
                           className="w-9 h-11 rounded-lg text-lg transition-all"
                           style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', color: '#90a4ae' }}
@@ -623,7 +625,7 @@ export default function RetirementCalculator() {
                   (today's {formatINR(result.monthlyExpenseNow)}/month at 7% inflation) for {result.retirementYears} years
                 </p>
               </div>
-              <div className="grid grid-cols-3 gap-3 pt-5">
+              <div className="grid grid-cols-3 gap-2 md:gap-3 pt-5">
                 {([
                   ['Retirement\nCorpus',        result.corpusNeeded,          '#ffffff'],
                   ['Emergency\nBuffer (6 mo.)', result.emergencyFund,         '#fde68a'],
@@ -640,7 +642,7 @@ export default function RetirementCalculator() {
             {/* Cash flow */}
             <Card>
               <h3 className="text-lg font-bold mb-4" style={{ color: '#d4a843' }}>Monthly Cash Flow</h3>
-              <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="grid grid-cols-3 gap-2 md:gap-3 mb-4">
                 {([
                   ['Income', result.monthlyIncome, '#ffffff'],
                   ['Expenses', result.monthlyExpenseNow, '#fca5a5'],
@@ -653,7 +655,7 @@ export default function RetirementCalculator() {
                 ))}
               </div>
               {result.gap > 0 && (
-                <div className="flex justify-between items-center rounded-xl px-5 py-4" style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)' }}>
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 rounded-xl px-4 md:px-5 py-4" style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)' }}>
                   <div>
                     <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#90a4ae' }}>SIP Needed to Close Gap</p>
                     <p className="text-3xl font-bold" style={{ color: '#d4a843' }}>{formatINR(result.monthlyGap)}</p>
@@ -661,7 +663,7 @@ export default function RetirementCalculator() {
                   </div>
                   <div>
                     {(() => { const b = affordBadge[result.sipAffordability]; return (
-                      <span style={{ ...b, background: b.bg, padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 700 }}>{b.text}</span>
+                      <span style={{ ...b, background: b.bg, padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 700, display: 'inline-block' }}>{b.text}</span>
                     ); })()}
                   </div>
                 </div>
@@ -737,11 +739,11 @@ export default function RetirementCalculator() {
               <h3 className="text-lg font-bold mb-1" style={{ color: '#d4a843' }}>Personalised Recommendations</h3>
               <p className="text-xs mb-5" style={{ color: '#90a4ae' }}>Based on your gap, surplus, age, and insurance status</p>
               {result.recommendations.map((rec, i) => (
-                <div key={i} className="flex gap-4 items-start py-4" style={{ borderBottom: i < result.recommendations.length - 1 ? '1px solid rgba(255,255,255,0.08)' : 'none' }}>
-                  <span className="text-2xl flex-shrink-0">{rec.icon}</span>
+                <div key={i} className="flex gap-3 md:gap-4 items-start py-4" style={{ borderBottom: i < result.recommendations.length - 1 ? '1px solid rgba(255,255,255,0.08)' : 'none' }}>
+                  <span className="text-xl md:text-2xl flex-shrink-0 mt-0.5">{rec.icon}</span>
                   <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start gap-3 mb-2">
-                      <p className="text-base font-bold" style={{ color: '#ffffff' }}>{rec.title}</p>
+                    <div className="flex flex-wrap justify-between items-start gap-2 mb-2">
+                      <p className="text-sm md:text-base font-bold" style={{ color: '#ffffff' }}>{rec.title}</p>
                       <span style={priorityStyle(rec.priority)}>{rec.priority}</span>
                     </div>
                     <p className="text-sm leading-relaxed" style={{ color: '#cfd8dc' }}>{rec.detail}</p>
