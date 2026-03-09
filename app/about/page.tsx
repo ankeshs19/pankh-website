@@ -88,7 +88,7 @@ export default function About() {
               <div>
                 <h3 className="text-xl font-bold text-pankh-navy mb-2">Trust First</h3>
                 <p className="text-gray-700">
-                  We earn trust through transparency and honest advice, not sales pressure.
+                  We earn trust through transparency and honest communication, not sales pressure.
                 </p>
               </div>
             </div>
@@ -178,7 +178,7 @@ export default function About() {
               <h3 className="text-2xl font-bold text-pankh-navy mb-4">Our Positioning</h3>
               <p className="text-lg text-gray-700 italic">
                 "For first-generation investors and underserved Indian households who are ready to grow 
-                their wealth but don't know where to start, Pankh Technology makes financial planning feel simple, 
+                their wealth but don't know where to start, Pankh Technology makes understanding finances feel simple, 
                 safe, and personally meaningful — unlike large AMC platforms or metro-focused advisors who 
                 are built for already-informed investors."
               </p>
