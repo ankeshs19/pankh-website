@@ -819,11 +819,11 @@ export default function RetirementCalculator() {
             {/* CTA */}
             <div className="rounded-2xl p-5 sm:p-6 text-center" style={{ background: 'rgba(15,32,68,0.8)', border: '1px solid rgba(255,255,255,0.1)' }}>
               <p className="text-lg font-bold mb-2" style={{ color: '#ffffff' }}>Ready to act on this plan?</p>
-              <p className="text-sm mb-5" style={{ color: '#b0bec5' }}>Our team can help you start your SIP, choose the right NPS fund, and get the right insurance — all in one place.</p>
+              <p className="text-sm mb-5" style={{ color: '#b0bec5' }}>Our team can connect you with SEBI-registered advisers, AMFI-registered distributors, and IRDAI-registered agents — in your language, near your city.</p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <a href="/contact" className="inline-block font-semibold px-8 py-3 rounded-full transition text-sm"
                   style={{ background: '#d4a843', color: '#0f2044' }}>
-                  Talk to an Advisor
+                  Get in Touch
                 </a>
                 <a href="https://wa.me/919746207344" target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2 font-semibold px-8 py-3 rounded-full transition text-sm"
