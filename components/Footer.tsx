@@ -80,7 +80,7 @@ export default function Footer() {
         <div className="border-t border-gray-700 mt-8 pt-6 text-center text-sm text-gray-400">
           <p>&copy; {new Date().getFullYear()} Pankh Technology Pvt Limited. All rights reserved.</p>
           <p className="mt-2 text-xs">
-            Mutual fund investments are subject to market risks. Please read all scheme related documents carefully.
+            Pankh Technology Pvt Limited is a financial education and awareness platform. We are not a SEBI-registered investment adviser or AMFI-registered mutual fund distributor. Content on this website is for educational purposes only and does not constitute investment advice. Please consult a registered professional before making any financial decisions.
           </p>
         </div>
       </div>
