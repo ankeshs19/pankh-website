@@ -11,15 +11,26 @@ export default function Home() {
       <section className="bg-gradient-to-br from-pankh-navy to-pankh-navy-light text-white py-16 md:py-32">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-5 md:mb-6 leading-snug">
-              <span className="text-pankh-gold">Har ummeed ko Pankh,</span>
-              <br className="hidden sm:block" />
-              <span className="sm:hidden"> </span>
-              har nivesh mein vishwas!
+
+            {/* Main Hindi tagline */}
+            <h1 className="font-bold mb-4 md:mb-5 leading-tight tracking-wide"
+                style={{ fontFamily: "'Noto Sans', sans-serif" }}>
+              <span className="block text-4xl sm:text-5xl md:text-7xl text-pankh-gold">
+                पंख
+              </span>
+              <span className="block text-2xl sm:text-3xl md:text-5xl text-white mt-1 md:mt-2">
+                आर्थिक आज़ादी को
+              </span>
             </h1>
-            <p className="text-lg sm:text-xl md:text-2xl mb-6 md:mb-8 text-gray-200">
-              Wings to Financial Freedom
-            </p>
+
+            {/* Gold divider with English tagline */}
+            <div className="flex items-center justify-center gap-3 sm:gap-4 mb-8 md:mb-10">
+              <div className="h-px w-8 sm:w-14 md:w-20 bg-pankh-gold/50 flex-shrink-0" />
+              <p className="text-pankh-gold text-sm sm:text-base md:text-lg font-semibold tracking-widest uppercase whitespace-nowrap">
+                Wings to Financial Freedom
+              </p>
+              <div className="h-px w-8 sm:w-14 md:w-20 bg-pankh-gold/50 flex-shrink-0" />
+            </div>
             <p className="text-base md:text-lg mb-8 md:mb-10 text-gray-300 max-w-2xl mx-auto px-2">
               Democratizing financial awareness for every Indian. Simple, safe, and meaningful financial education — especially for Tier 2/3 India.
             </p>
