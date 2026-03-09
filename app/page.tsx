@@ -21,7 +21,7 @@ export default function Home() {
               Wings to Financial Freedom
             </p>
             <p className="text-base md:text-lg mb-8 md:mb-10 text-gray-300 max-w-2xl mx-auto px-2">
-              Democratizing wealth creation for every Indian. Simple, safe, and meaningful investing — especially for Tier 2/3 India.
+              Democratizing financial awareness for every Indian. Simple, safe, and meaningful financial education — especially for Tier 2/3 India.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 sm:px-0">
               <Link
@@ -72,8 +72,7 @@ export default function Home() {
               Our Mission
             </h2>
             <p className="text-lg text-gray-700 text-center mb-12 leading-relaxed">
-              To simplify investing for everyday Indians by providing accessible, jargon-free financial education, 
-              personalized guidance, and technology-enabled distribution — especially in markets that have been 
+              To simplify financial education for everyday Indians by providing accessible, jargon-free financial literacy resources, and connections to licensed professionals — especially in markets that have been 
               traditionally overlooked.
             </p>
 
@@ -111,7 +110,7 @@ export default function Home() {
               <div className="text-5xl mb-4">📚</div>
               <h3 className="text-xl font-bold text-pankh-navy mb-3">Education</h3>
               <p className="text-gray-600">
-                We educate before we sell. An informed investor is our best customer.
+                We educate before anything else. An informed person makes better financial decisions.
               </p>
             </div>
 
@@ -181,7 +180,7 @@ export default function Home() {
                 <li>• Goals: education, security</li>
               </ul>
               <p className="text-xs text-gray-500 italic">
-                Zero jargon, WhatsApp-friendly, SIPs from ₹100-₹500 to build the habit.
+                Zero jargon, WhatsApp-friendly, SIPs from ₹100-₹500 — we help you understand the habit.
               </p>
             </div>
           </div>
@@ -192,10 +191,10 @@ export default function Home() {
       <section className="py-20 bg-gradient-to-br from-pankh-navy to-pankh-navy-light text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            Ready to Start Your Investment Journey?
+            Ready to Start Your Financial Awareness Journey?
           </h2>
           <p className="text-xl mb-10 text-gray-200 max-w-2xl mx-auto">
-            Join thousands of Indians who are taking their first steps toward financial freedom.
+            Join Indians who are building their financial knowledge and taking informed steps forward.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 sm:px-0">
             <Link
