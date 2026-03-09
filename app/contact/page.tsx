@@ -71,7 +71,7 @@ ${formData.message}
               Get In <span className="text-pankh-gold">Touch</span>
             </h1>
             <p className="text-xl text-gray-200">
-              Ready to start your investment journey? Let's talk!
+              Ready to start your financial education journey? Let's talk!
             </p>
           </div>
         </div>
@@ -88,8 +88,8 @@ ${formData.message}
                   Let's Start a Conversation
                 </h2>
                 <p className="text-gray-700 mb-8 leading-relaxed">
-                  Whether you have questions about retirement planning, want to start your first SIP, 
-                  or just need some guidance — we're here to help. Fill out the form and 
+                  Whether you have questions about retirement planning, want to learn about savings options, 
+                  or just want to understand your finances better — we're here to help. Fill out the form and 
                   we'll get back to you shortly.
                 </p>
 
@@ -238,11 +238,11 @@ ${formData.message}
                       onChange={handleChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pankh-navy focus:border-transparent"
                     >
-                      <option value="">Select a service</option>
-                      <option value="Retirement Planning">Retirement Planning</option>
-                      <option value="Future Planning">Future Planning (Education/Marriage/Home)</option>
-                      <option value="SIP Investment">Starting SIP Investment</option>
-                      <option value="Tax Planning">Tax Planning</option>
+                      <option value="">Select a topic</option>
+                      <option value="Retirement Planning Awareness">Retirement Planning Awareness</option>
+                      <option value="Financial Goals Awareness">Financial Goals Awareness (Education / Marriage / Home)</option>
+                      <option value="Learning About SIP and Mutual Funds">Learning About SIP &amp; Mutual Funds</option>
+                      <option value="Tax-Saving Instruments Awareness">Tax-Saving Instruments Awareness</option>
                       <option value="General Inquiry">General Inquiry</option>
                     </select>
                   </div>
