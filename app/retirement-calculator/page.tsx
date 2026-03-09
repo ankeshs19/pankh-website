@@ -4,7 +4,7 @@ import RetirementCalculator from '@/components/RetirementCalculator'
 
 export const metadata = {
   title: 'Retirement Calculator | Pankh — Wings to Financial Freedom',
-  description: 'Plan your retirement corpus with India\'s most comprehensive calculator. Covers MF, NPS, PPF, EPF, insurance gaps and monthly SIP needed.',
+  description: 'Understand your estimated retirement corpus, savings gap, and what instruments people commonly use — for financial education purposes only.',
 }
 
 export default function RetirementCalculatorPage() {
