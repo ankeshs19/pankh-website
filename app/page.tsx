@@ -112,7 +112,7 @@ export default function Home() {
               <div className="text-5xl mb-4">🤝</div>
               <h3 className="text-xl font-bold text-pankh-navy mb-3">Trust First</h3>
               <p className="text-gray-600">
-                We earn trust through transparency and honest advice, not sales pressure.
+                We earn trust through transparency and honest communication, not sales pressure.
               </p>
             </div>
 
