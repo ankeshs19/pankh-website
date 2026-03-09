@@ -15,7 +15,7 @@ export default function Services() {
               Our <span className="text-pankh-gold">Services</span>
             </h1>
             <p className="text-xl text-gray-200">
-              Simple, transparent, and personalized financial solutions for your future
+              Simple, transparent financial education and awareness for your future
             </p>
           </div>
         </div>
@@ -26,9 +26,9 @@ export default function Services() {
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             <p className="text-lg text-gray-700 text-center mb-16 max-w-3xl mx-auto leading-relaxed">
-              At Pankh, we believe financial planning should be simple and accessible to everyone. 
-              Whether you're planning for retirement or securing your family's future, we're here to 
-              guide you every step of the way.
+              At Pankh, we believe understanding your finances should be simple and accessible to everyone. 
+              Whether you're thinking about retirement or securing your family's future, we're here to 
+              help you understand your options every step of the way.
             </p>
 
             <div className="grid md:grid-cols-2 gap-8">
@@ -36,12 +36,11 @@ export default function Services() {
               <div className="bg-gradient-to-br from-blue-50 to-white p-6 md:p-8 rounded-2xl shadow-xl hover:shadow-2xl transition border-2 border-pankh-navy/10">
                 <div className="flex items-center mb-6">
                   <div className="text-4xl md:text-5xl mr-3 md:mr-4 flex-shrink-0">🏖️</div>
-                  <h2 className="text-2xl md:text-3xl font-bold text-pankh-navy">Retirement Planning</h2>
+                  <h2 className="text-2xl md:text-3xl font-bold text-pankh-navy">Retirement Awareness</h2>
                 </div>
                 
                 <p className="text-gray-700 mb-6 leading-relaxed">
-                  Secure your golden years with a personalized retirement plan. Start early, invest smartly, 
-                  and retire with confidence.
+                  Understand what retirement planning involves. Learn what corpus you may need and what savings options exist — so you can work with the right licensed professionals confidently.
                 </p>
 
                 <div className="space-y-4 mb-6">
@@ -60,8 +59,8 @@ export default function Services() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     <div>
-                      <h4 className="font-semibold text-pankh-navy">SIP & Investment Strategy</h4>
-                      <p className="text-sm text-gray-600">Build wealth through systematic monthly investments</p>
+                      <h4 className="font-semibold text-pankh-navy">Understanding SIPs & Savings Instruments</h4>
+                      <p className="text-sm text-gray-600">Learn how systematic savings work and what options exist</p>
                     </div>
                   </div>
 
@@ -70,8 +69,8 @@ export default function Services() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     <div>
-                      <h4 className="font-semibold text-pankh-navy">Tax-Efficient Planning</h4>
-                      <p className="text-sm text-gray-600">Maximize returns while minimizing tax liability</p>
+                      <h4 className="font-semibold text-pankh-navy">Tax-Saving Instruments Awareness</h4>
+                      <p className="text-sm text-gray-600">Understand instruments like ELSS, PPF, and NPS that offer tax benefits under Indian law</p>
                     </div>
                   </div>
 
@@ -80,8 +79,8 @@ export default function Services() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     <div>
-                      <h4 className="font-semibold text-pankh-navy">Pension & Annuity Planning</h4>
-                      <p className="text-sm text-gray-600">Ensure steady income after retirement</p>
+                      <h4 className="font-semibold text-pankh-navy">Understanding Pension & Annuity Options</h4>
+                      <p className="text-sm text-gray-600">Learn about options that provide steady income after retirement</p>
                     </div>
                   </div>
                 </div>
@@ -105,12 +104,11 @@ export default function Services() {
               <div className="bg-gradient-to-br from-yellow-50 to-white p-6 md:p-8 rounded-2xl shadow-xl hover:shadow-2xl transition border-2 border-pankh-gold/20">
                 <div className="flex items-center mb-6">
                   <div className="text-4xl md:text-5xl mr-3 md:mr-4 flex-shrink-0">🎓</div>
-                  <h2 className="text-2xl md:text-3xl font-bold text-pankh-navy">Future Planning</h2>
+                  <h2 className="text-2xl md:text-3xl font-bold text-pankh-navy">Financial Goals Awareness</h2>
                 </div>
                 
                 <p className="text-gray-700 mb-6 leading-relaxed">
-                  Prepare for life's important milestones — from children's education to buying a home. 
-                  Start planning today for a stress-free tomorrow.
+                  Understand how to think about life's important financial milestones — from children's education to buying a home. Know what to plan for, so tomorrow feels less uncertain.
                 </p>
 
                 <div className="space-y-4 mb-6">
@@ -119,8 +117,8 @@ export default function Services() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     <div>
-                      <h4 className="font-semibold text-pankh-navy">Children's Education Fund</h4>
-                      <p className="text-sm text-gray-600">Secure quality education for your children's future</p>
+                      <h4 className="font-semibold text-pankh-navy">Understanding Education Savings</h4>
+                      <p className="text-sm text-gray-600">Learn about savings options that can help fund your children's education</p>
                     </div>
                   </div>
 
@@ -202,10 +200,9 @@ export default function Services() {
                   2
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-pankh-navy mb-2">Personalized Plan Creation</h3>
+                  <h3 className="text-xl font-bold text-pankh-navy mb-2">Personalized Goal Clarity</h3>
                   <p className="text-gray-700">
-                    Based on your goals, we create a simple, customized investment plan. You'll know exactly 
-                    how much to invest, where to invest, and why.
+                    Based on your goals, we help you understand what they mean in numbers — what kind of corpus may be needed, and what savings instruments are generally used for such goals. No jargon, no pressure.
                   </p>
                 </div>
               </div>
@@ -216,10 +213,9 @@ export default function Services() {
                   3
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-pankh-navy mb-2">Easy Onboarding & Support</h3>
+                  <h3 className="text-xl font-bold text-pankh-navy mb-2">Connecting You to the Right People</h3>
                   <p className="text-gray-700">
-                    We help you start your SIPs with complete hand-holding. WhatsApp support, video calls, 
-                    or in-person meetings — whatever works best for you.
+                    We connect you with SEBI-registered advisers, AMFI-registered distributors, and IRDAI-registered insurance agents — in your language, near your city. WhatsApp, video call, or in-person, whatever works for you.
                   </p>
                 </div>
               </div>
@@ -232,8 +228,8 @@ export default function Services() {
                 <div>
                   <h3 className="text-xl font-bold text-pankh-navy mb-2">Ongoing Guidance</h3>
                   <p className="text-gray-700">
-                    Your journey doesn't end at onboarding. We stay with you, providing regular updates, 
-                    portfolio reviews, and guidance as your life evolves.
+                    Your journey doesn't end at onboarding. We stay with you, answering questions, sharing 
+                    relevant financial education, and helping you stay connected to licensed professionals as your life evolves.
                   </p>
                 </div>
               </div>
@@ -253,7 +249,7 @@ export default function Services() {
               <div className="text-5xl mb-4">🎯</div>
               <h3 className="text-xl font-bold text-pankh-navy mb-3">Goal-Focused</h3>
               <p className="text-gray-600">
-                We don't sell products. We help you achieve your life goals through smart investing.
+                We don't sell products. We help you understand your options so you can make informed decisions.
               </p>
             </div>
 
@@ -283,14 +279,14 @@ export default function Services() {
             Ready to Start Your Journey?
           </h2>
           <p className="text-xl mb-10 text-gray-200 max-w-2xl mx-auto">
-            Whether it's retirement or your child's education, let's create a plan together.
+            Whether it's retirement or your child's education, let's make sure you understand your options.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 sm:px-0">
             <Link
               href="/contact"
               className="bg-pankh-gold hover:bg-pankh-gold-light text-pankh-navy font-semibold px-8 py-4 rounded-full transition text-base md:text-lg text-center inline-block"
             >
-              Talk to an Advisor
+              Get in Touch
             </Link>
             <a
               href="https://wa.me/919746207344"
