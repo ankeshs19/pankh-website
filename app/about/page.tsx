@@ -14,7 +14,7 @@ export default function About() {
               About <span className="text-pankh-gold">Pankh Technology</span>
             </h1>
             <p className="text-xl text-gray-200">
-              Democratizing wealth creation across India — one investor at a time
+              Democratizing financial awareness across India — one person at a time
             </p>
           </div>
         </div>
@@ -26,10 +26,10 @@ export default function About() {
           <div className="max-w-4xl mx-auto">
             <div className="prose prose-lg max-w-none">
               <p className="text-lg text-gray-700 leading-relaxed mb-6">
-                Pankh Technology Pvt Limited is a startup recognized by Department for Promotion of Industry and Internal Trade (DIPP83254) with a mission to democratize wealth creation 
+                Pankh Technology Pvt Limited is a startup recognized by Department for Promotion of Industry and Internal Trade (DIPP83254) with a mission to democratize financial awareness and literacy
                 across India — particularly in underserved Tier 2, Tier 3 cities and rural markets. We 
-                believe every Indian deserves access to quality financial products, transparent advice, 
-                and the confidence to invest for their future.
+                believe every Indian deserves access to quality financial information, transparent education, 
+                and the confidence to take informed financial decisions.
               </p>
             </div>
 
@@ -56,8 +56,8 @@ export default function About() {
                 <div className="text-4xl mb-4">🎯</div>
                 <h2 className="text-2xl font-bold text-pankh-navy mb-4">Our Vision</h2>
                 <p className="text-gray-700 leading-relaxed">
-                  To become India's most trusted investment advisor for the next 100 million investors — 
-                  people who have never invested before but deserve to.
+                  To become India's most trusted financial education platform for the next 100 million first-time investors — 
+                  people who have never had access to financial guidance but deserve to.
                 </p>
               </div>
 
@@ -66,8 +66,8 @@ export default function About() {
                 <div className="text-4xl mb-4">🚀</div>
                 <h2 className="text-2xl font-bold text-pankh-navy mb-4">Our Mission</h2>
                 <p className="text-gray-700 leading-relaxed">
-                  To simplify investing for everyday Indians by providing accessible, jargon-free financial 
-                  education, personalized guidance, and technology-enabled distribution — especially in 
+                  To simplify financial education for everyday Indians by providing accessible, jargon-free financial 
+                  literacy resources, and connections to licensed professionals — especially in 
                   markets that have been traditionally overlooked.
                 </p>
               </div>
@@ -98,7 +98,7 @@ export default function About() {
               <div>
                 <h3 className="text-xl font-bold text-pankh-navy mb-2">Education</h3>
                 <p className="text-gray-700">
-                  We educate before we sell. An informed investor is our best customer.
+                  We educate before anything else. An informed person makes better financial decisions.
                 </p>
               </div>
             </div>
@@ -178,7 +178,7 @@ export default function About() {
               <h3 className="text-2xl font-bold text-pankh-navy mb-4">Our Positioning</h3>
               <p className="text-lg text-gray-700 italic">
                 "For first-generation investors and underserved Indian households who are ready to grow 
-                their wealth but don't know where to start, Pankh Technology makes investing feel simple, 
+                their wealth but don't know where to start, Pankh Technology makes financial planning feel simple, 
                 safe, and personally meaningful — unlike large AMC platforms or metro-focused advisors who 
                 are built for already-informed investors."
               </p>
@@ -201,7 +201,7 @@ export default function About() {
                 <ul className="space-y-2 text-sm">
                   <li>• Trust-first: "We educate before we sell"</li>
                   <li>• Goal-first: "What do you want to achieve?"</li>
-                  <li>• Human-first: "Your advisor is a real person"</li>
+                  <li>• Human-first: "Your guide is a real person"</li>
                   <li>• Bharat-first: Hindi/regional, Tier 2/3 focus</li>
                   <li>• Relationship-first: Ongoing guidance & support</li>
                 </ul>
