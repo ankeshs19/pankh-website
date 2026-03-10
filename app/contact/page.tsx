@@ -103,7 +103,7 @@ ${formData.message}
                     </div>
                     <div>
                       <h3 className="font-semibold text-pankh-navy mb-1">Email</h3>
-                      <p className="text-gray-600">ankeshs19@iimklive.com</p>
+                      <p className="text-gray-600">admin@pankh.tech</p>
                     </div>
                   </div>
 
