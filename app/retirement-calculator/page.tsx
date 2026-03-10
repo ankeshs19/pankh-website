@@ -3,8 +3,8 @@ import Footer from '@/components/Footer'
 import RetirementCalculator from '@/components/RetirementCalculator'
 
 export const metadata = {
-  title: 'Retirement Calculator | Pankh — Wings to Financial Freedom',
-  description: 'Understand your estimated retirement corpus, savings gap, and what instruments people commonly use — for financial education purposes only.',
+  title: 'Retirement Calculator | Pankh — Free Tool for Indian Investors',
+  description: 'Free retirement calculator for Indian investors. Know your corpus number, savings gap, and monthly SIP needed — in 3 minutes. No login. No spam.',
 }
 
 export default function RetirementCalculatorPage() {
